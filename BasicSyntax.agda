@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K --no-termination-check  #-}
+{-# OPTIONS --type-in-type --no-positivity-check --no-termination-check #-}
 
 
 module BasicSyntax where 
@@ -20,7 +20,6 @@ data Ty (Γ : Con)  : Set
 data Tm            : {Γ : Con}(A : Ty Γ) → Set
 data Var           : {Γ : Con}(A : Ty Γ) → Set
 data _⇒_           : Con → Con → Set
-data psOut : (Γ : Con) {A : Ty Γ} → Var A -> Set
 data isContr       : Con → Set
 data Con where
   ε     : Con
@@ -59,11 +58,6 @@ cohOp-eq {Γ} {.B} {B} {a} {b} {refl} r = r
 
 cohOp-hom : {Γ : Con}{A B : Ty Γ}{a b : Tm B}(p : A ≡ B) → (a ⟦ p ⟫ =h b ⟦ p ⟫) ≡ (a =h b)
 cohOp-hom refl = refl
-
-cohOp-1 : {Γ : Con}{A  : Ty Γ}(a : Tm A) → a ≡ a ⟦ refl ⟫
-cohOp-1 a = refl
-
-
 
 cong≅ : {Γ Δ : Con}{A B : Ty Γ}{a : Tm A}{b : Tm B}{D : Ty Γ → Ty Δ} →
         (f : {C : Ty Γ} → Tm C → Tm (D C)) → 
@@ -106,66 +100,23 @@ cohOpVs {x = x} refl = refl (var (vS x))
 coh-eq : {Γ Δ : Con}{isc : isContr Δ}{γ δ : Γ ⇒ Δ}{A : Ty Δ} → γ ≡ δ → coh isc γ A ≅ coh isc δ A 
 coh-eq refl = refl _
 
-data psOut where
-   ps* : psOut (ε , *) v0
-   ps-ext : ∀{Γ : Con} {A : Ty Γ} {x : Var A} (psx : psOut Γ x) ->
-      psOut (Γ , A , (var (vS x) =h var v0)) v0
-   ps-r : ∀{Γ : Con} {A : Ty Γ} {x y : Var A} {f : Var (var x =h var y)} (psf : psOut Γ f) ->
-      psOut Γ y
-   
-
-data isContr where
-   ps-from : ∀ {Γ : Con} {x : Var *} (p : psOut Γ x) -> isContr Γ
-
-
-{-
-   c*   : isContr (ε , *)
-   ext  : ∀{Γ} → isContr Γ → {A : Ty Γ}(x : Var A) 
-     → isContr (Γ , A , (var (vS x) =h var v0))     
-     -}
-{-
 data isContr where
   c*   : isContr (ε , *)
   ext  : ∀{Γ} → isContr Γ → {A : Ty Γ}(x : Var A) 
        → isContr (Γ , A , (var (vS x) =h var v0))     
-       -}
-
-postulate
-  Ty-uip : {Γ : Con} {A B : Ty Γ} (e e' : A ≡ B) -> e  ≡ e'
-
-
-Ty_uip_refl : {Γ : Con} (A : Ty Γ) (e : A ≡ A) -> e  ≡ refl
-Ty_uip_refl A e = Ty-uip e refl
-
-≅≡ : {Γ : Con} {A A' : Ty Γ} {t : Tm A} {t' : Tm A'} (e : t ≅ t') -> A ≡ A'
-≅≡ (refl _) = refl
-
-cohCar : {Γ : Con}{A B : Ty Γ}{a : Tm A} {b : Tm B}(p : a ≅ b)  → b ⟦ ≅≡ p ⟫ ≡ a
-cohCar {Γ} {A} {B} {a} {b} (refl _) = refl
-
-PTm≅≡ : {Γ : Con} {A : Ty Γ} (t : Tm A) (t' : Tm A) (e : A ≡ A) -> Set
-PTm≅≡ t t' e = t' ⟦ e ⟫ ≡ t 
-
-Tm≅≡ : {Γ : Con} {A : Ty Γ} {t : Tm A} {t' : Tm A} (e : t ≅ t') -> t' ≡ t
-Tm≅≡ {Γ} {A} {t} {t'} e = subst (PTm≅≡ t t') {≅≡ e}{refl}(Ty_uip_refl A (≅≡ e)) (cohCar e)
-
-
----(hprop _ (≅≡ e)) (cohCar e)!}
 
 hom≡ : {Γ : Con}{A A' : Ty Γ}
                 {a : Tm A}{a' : Tm A'}(q : a ≅ a')
                 {b : Tm A}{b' : Tm A'}(r : b ≅ b')
                 → (a =h b) ≡ (a' =h b')
-hom≡ {Γ} {A} {A'} {a} {a'} (refl _) {b} {b'} r rewrite Tm≅≡ r = refl
---hom≡ {Γ} {.A'} {A'} {.a'} {a'} (refl .a') {.b'} {b'} (refl .b') = refl
+hom≡ {Γ} {.A'} {A'} {.a'} {a'} (refl .a') {.b'} {b'} (refl .b') = refl
 
 
 S-eq : {Γ Δ : Con}{γ δ : Γ ⇒ Δ}{A : Ty Δ}
         {a : Tm (A [ γ ]T)}{a' : Tm (A [ δ ]T)} 
         → γ ≡ δ → a ≅ a' 
         → _≡_ {_} {Γ ⇒ (Δ , A)} (γ , a) (δ , a')
--- S-eq refl (refl _) = refl
-S-eq refl e rewrite Tm≅≡ e = refl
+S-eq refl (refl _) = refl
 
 [⊚]T    : ∀{Γ Δ Θ A}{θ : Δ ⇒ Θ}{δ : Γ ⇒ Δ} 
         → A [ θ ⊚ δ ]T ≡ (A [ θ ]T)[ δ ]T  
@@ -207,13 +158,6 @@ wk-tm+ B t  = t ⟦ [+S]T ⟫
 
 (var x)     +tm B = var (vS x)
 (coh cΔ δ A) +tm B = coh cΔ (δ +S B) A ⟦ sym [+S]T ⟫ 
-
-ps-from-any : ∀ {Γ : Con} {A : Ty Γ} {x : Var A} (p : psOut Γ x) -> isContr Γ
-
--- Formally, it would be by induction on the level (nb of nested arrows) of A
-ps-from-any ps* = ps-from ps*
-ps-from-any (ps-ext {Γ} {A} {x} p) = ps-from-any (ps-r (ps-ext p))
-ps-from-any (ps-r p) = ps-from-any (ps-r p)
 
 cong+tm : {Γ : Con}{A B C : Ty Γ}{a : Tm A}{b : Tm B} → 
           a ≅ b
