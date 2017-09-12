@@ -1,4 +1,4 @@
-{-# OPTIONS --type-in-type --no-positivity-check --no-termination-check #-}
+{-# OPTIONS --without-K --no-termination-check  #-}
 
 
 module BasicSyntax where 
