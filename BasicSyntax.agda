@@ -105,18 +105,42 @@ data isContr where
   ext  : ∀{Γ} → isContr Γ → {A : Ty Γ}(x : Var A) 
        → isContr (Γ , A , (var (vS x) =h var v0))     
 
+postulate
+  Ty-uip : {Γ : Con} {A B : Ty Γ} (e e' : A ≡ B) -> e  ≡ e'
+
+
+Ty_uip_refl : {Γ : Con} (A : Ty Γ) (e : A ≡ A) -> e  ≡ refl
+Ty_uip_refl A e = Ty-uip e refl
+
+≅≡ : {Γ : Con} {A A' : Ty Γ} {t : Tm A} {t' : Tm A'} (e : t ≅ t') -> A ≡ A'
+≅≡ (refl _) = refl
+
+cohCar : {Γ : Con}{A B : Ty Γ}{a : Tm A} {b : Tm B}(p : a ≅ b)  → b ⟦ ≅≡ p ⟫ ≡ a
+cohCar {Γ} {A} {B} {a} {b} (refl _) = refl
+
+PTm≅≡ : {Γ : Con} {A : Ty Γ} (t : Tm A) (t' : Tm A) (e : A ≡ A) -> Set
+PTm≅≡ t t' e = t' ⟦ e ⟫ ≡ t 
+
+Tm≅≡ : {Γ : Con} {A : Ty Γ} {t : Tm A} {t' : Tm A} (e : t ≅ t') -> t' ≡ t
+Tm≅≡ {Γ} {A} {t} {t'} e = subst (PTm≅≡ t t') {≅≡ e}{refl}(Ty_uip_refl A (≅≡ e)) (cohCar e)
+
+
+---(hprop _ (≅≡ e)) (cohCar e)!}
+
 hom≡ : {Γ : Con}{A A' : Ty Γ}
                 {a : Tm A}{a' : Tm A'}(q : a ≅ a')
                 {b : Tm A}{b' : Tm A'}(r : b ≅ b')
                 → (a =h b) ≡ (a' =h b')
-hom≡ {Γ} {.A'} {A'} {.a'} {a'} (refl .a') {.b'} {b'} (refl .b') = refl
+hom≡ {Γ} {A} {A'} {a} {a'} (refl _) {b} {b'} r rewrite Tm≅≡ r = refl
+--hom≡ {Γ} {.A'} {A'} {.a'} {a'} (refl .a') {.b'} {b'} (refl .b') = refl
 
 
 S-eq : {Γ Δ : Con}{γ δ : Γ ⇒ Δ}{A : Ty Δ}
         {a : Tm (A [ γ ]T)}{a' : Tm (A [ δ ]T)} 
         → γ ≡ δ → a ≅ a' 
         → _≡_ {_} {Γ ⇒ (Δ , A)} (γ , a) (δ , a')
-S-eq refl (refl _) = refl
+-- S-eq refl (refl _) = refl
+S-eq refl e rewrite Tm≅≡ e = refl
 
 [⊚]T    : ∀{Γ Δ Θ A}{θ : Δ ⇒ Θ}{δ : Γ ⇒ Δ} 
         → A [ θ ⊚ δ ]T ≡ (A [ θ ]T)[ δ ]T  

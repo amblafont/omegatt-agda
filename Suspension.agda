@@ -64,6 +64,7 @@ cor-inv (δ , a) = S-eq (trans (⊚wk _) (cor-inv δ))
 id-S++ : {Γ : Con}(Δ Θ : Con) → (Δ ⇒ Θ) → (Γ ++ Δ) ⇒ (Γ ++ Θ)
 id-S++ Δ Θ γ = repeat-p1 Δ ++S (γ ⊚ cor _)
 
+
 ΣC : Con → Con
 ΣT : ∀{Γ} → Ty Γ → Ty (ΣC Γ)
 
@@ -82,8 +83,6 @@ id-S++ Δ Θ γ = repeat-p1 Δ ++S (γ ⊚ cor _)
 Σs• : (Γ : Con) → ΣC Γ ⇒ ΣC ε
 Σs• ε = IdS
 Σs• (Γ , A) = Σs• Γ +S _
-
-ΣC-Ps : ∀ {Γ} {A : Ty Γ} {x : Var A} (px : psOut Γ x) → psOut (ΣC Γ) (Σv x)
 
 ΣC-Contr : ∀ Δ → isContr Δ → isContr (ΣC Δ)
 ΣT[+T]   : ∀{Γ}(A B : Ty Γ) 
@@ -173,45 +172,12 @@ cohOpΣtm t p =  congΣtm (cohOp p)
 Σtm[+tm] {A = A} (var x) B = cohOpV (sym (ΣT[+T] A B))
 Σtm[+tm] {Γ} (coh {Δ = Δ} x δ A) B = cohOpΣtm (coh x (δ +S B) A) (sym [+S]T) ∾ cohOp (sym (ΣT[Σs]T A (δ +S B))) ∾ coh-eq (ΣsΣT δ B) ∾ cohOp (sym [+S]T) -¹ ∾ cong+tm2 (sym (ΣT[Σs]T A δ))
 
--- TODO : renommer ces trucs proprement
-Yop2 : (Γ : Con) (A : Ty Γ) (x : Var A) ->
-  (var (subst Var (sym (ΣT[+T] A A)) (vS (Σv x))) =h
-    var (subst Var (sym (ΣT[+T] A A)) v0))  
-  ≡ (var (vS (Σv x)) =h var v0)
 
-Yop2 Γ A x = hom≡ (cohOpV (sym (ΣT[+T] A A))) (cohOpV (sym (ΣT[+T] A A)))
-
-
-Yop2' : (Γ : Con) (A : Ty Γ) (x : Var A) (p : psOut (ΣC Γ) (Σv x)) ->
-  psOut (ΣC Γ , ΣT A ,
-  (var (subst Var (sym (ΣT[+T] A A)) (vS (Σv x))) =h
-  var (subst Var (sym (ΣT[+T] A A)) v0)))
-  v0
-
-Yop2'P : {Γ : Con} {A : Ty Γ} (B : Ty (ΣC Γ , ΣT A)) → Set
-Yop2'P {Γ} {A} B = psOut (ΣC Γ , ΣT A , B) v0
-
-Yop2' Γ A x p = subst (Yop2'P {Γ} {A}) (sym (Yop2 Γ A x)) (ps-ext p)
-
-
-
-
--- TODO : déplacer ça dans basic syntax
-cohPsOut : {Γ : Con}{A B : Ty Γ}{x : Var A} {y : Var B} → var x ≅ var y ->
-  psOut Γ y -> psOut Γ x
-
-cohPsOut (refl .(var _)) p = p
-
-
-ΣC-Ps ps* = ps-ext ps*
-ΣC-Ps {.(Γ , A , (var (vS x) =h var v0))} (ps-ext {Γ} {A} {x} px) =
-  cohPsOut (cohOpV ((sym
-  (hom≡ (cohOpV (sym (ΣT[+T] (A +T A) (var (vS x) =h var v0))))
-  (cohOpV (sym (ΣT[+T] (A +T A) (var (vS x) =h var v0)))))))) (Yop2' (Γ) (A) (x) (ΣC-Ps px))
-ΣC-Ps (ps-r px) = ps-r (ΣC-Ps px)
-
-ΣC-Contr Δ (ps-from p) = ps-from-any (ΣC-Ps p)
-
+ΣC-Contr .(ε , *) c* = ext c* v0
+ΣC-Contr .(Γ , A , (var (vS x) =h var v0)) (ext {Γ} r {A} x) = subst (λ y → isContr (ΣC Γ , ΣT A , y))
+                                                                 (hom≡ (cohOpV (sym (ΣT[+T] A A)) -¹)
+                                                                  (cohOpV (sym (ΣT[+T] A A)) -¹))
+                                                                 (ext (ΣC-Contr Γ r) {ΣT A} (Σv x))
 ΣC-it   : ∀{Γ}(A : Ty Γ) → Con → Con
 
 ΣT-it   : ∀{Γ Δ}(A : Ty Γ) → Ty Δ → Ty (ΣC-it A Δ)
@@ -431,3 +397,4 @@ rpl-sub : (Γ : Con)(A : Ty Γ)(a b : Tm A) →
         → Γ ⇒ rpl-C A (ε , * , * , (var (vS v0) =h var v0))
 rpl-sub Γ A a b t = IdS , a ⟦ rpl*-A ⟫ , b ⟦ rpl*-A2 A ⟫ , t ⟦ rpl-xy A a b ⟫
   
+
