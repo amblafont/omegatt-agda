@@ -3,7 +3,7 @@
 
 module GroupoidStructure where
 
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality 
 open import Data.Product renaming (_,_ to _,,_)
 open import Data.Nat
 
@@ -16,22 +16,17 @@ Coh-rpl  : ∀{Γ Δ}(A : Ty Γ)(B : Ty Δ) → isContr Δ
          → Tm (rpl-T A B)
 Coh-rpl {_} {Δ} A _ isC = coh (ΣC-it-ε-Contr A isC) _ _
 refl*-Tm : Tm {x:*} (var v0 =h var v0)
-refl*-Tm = Coh-Contr (ps-from ps*)
+refl*-Tm = Coh-Contr c*
 sym*-Ty : Ty x:*,y:*,α:x=y
 sym*-Ty = vY =h vX
 
-contr-x:*,y:*,α:x=y : psOut x:*,y:*,α:x=y v0
-contr-x:*,y:*,α:x=y = ps-ext ps*
-
 sym*-Tm : Tm {x:*,y:*,α:x=y} sym*-Ty
-sym*-Tm = Coh-Contr (ps-from-any contr-x:*,y:*,α:x=y)
-
+sym*-Tm = Coh-Contr (ext c* v0)
 trans*-Ty : Ty x:*,y:*,α:x=y,z:*,β:y=z
 trans*-Ty = (vX +tm _ +tm _) =h vZ
 
-
 trans*-Tm : Tm trans*-Ty
-trans*-Tm = Coh-Contr (ps-from-any (ps-ext (ps-r contr-x:*,y:*,α:x=y)))
+trans*-Tm = Coh-Contr (ext (ext c* v0) (vS v0))
 refl-Tm    : {Γ : Con}(A : Ty Γ) 
            → Tm (rpl-T {Δ = x:*} A (var v0 =h var v0))
 refl-Tm A  = rpl-tm A refl*-Tm
@@ -136,25 +131,26 @@ Ty-G-assoc* = (trans*-Tm [ ((((• , vM) , vP) ,
 Tm-right-identity* : 
   Tm {x:*,y:*,α:x=y} (trans*-Tm [ IdS , vY , reflY ]tm 
   =h vα)
-Tm-right-identity* = Coh-Contr (ps-from-any contr-x:*,y:*,α:x=y)
+Tm-right-identity* = Coh-Contr (ext c* v0)
 
 Tm-left-identity* : 
   Tm {x:*,y:*,α:x=y} (trans*-Tm [ ((IdS ⊚ pr1 ⊚ pr1) , vX) ,
   reflX , vY , vα ]tm =h vα)
-Tm-left-identity* = Coh-Contr (ps-from-any contr-x:*,y:*,α:x=y)
+Tm-left-identity* = Coh-Contr (ext c* v0)
 
 Tm-right-inverse* : 
   Tm {x:*,y:*,α:x=y} (trans*-Tm [ (IdS , vX) , sym*-Tm ]tm 
   =h reflX)
-Tm-right-inverse* = Coh-Contr (ps-from-any contr-x:*,y:*,α:x=y)
+Tm-right-inverse* = Coh-Contr (ext c* v0)
 
 Tm-left-inverse* : 
   Tm {x:*,y:*,α:x=y} (trans*-Tm [ ((• , vY) , vX , sym*-Tm ,
   vY) , vα ]tm =h reflY)
-Tm-left-inverse* = Coh-Contr (ps-from-any contr-x:*,y:*,α:x=y)
+Tm-left-inverse* = Coh-Contr (ext c* v0)
 
 Tm-G-assoc*  : Tm Ty-G-assoc*
-Tm-G-assoc*  = Coh-Contr (ps-from-any (ps-ext (ps-r (ps-ext (ps-r contr-x:*,y:*,α:x=y)))))
+Tm-G-assoc*  = Coh-Contr (ext (ext (ext c* v0) (vS v0)) 
+             (vS v0))
 Tm-G-assoc    : ∀{Γ}(A : Ty Γ) 
               → Tm (rpl-T A Ty-G-assoc*)
 Tm-G-assoc A  = rpl-tm A Tm-G-assoc* 
