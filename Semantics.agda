@@ -11,8 +11,11 @@ open import Coinduction
 open import Relation.Binary.PropositionalEquality hiding ([_])
 open import GroupoidStructure
 
-open import GlobularTypes
+open import GlobularTypes renaming (∣_∣ to 〚_〛)
 
+
+∣_∣ : {A : Set₁} → A → A
+∣ x ∣ = x
 
 coerce : {A B : Set} → B ≡ A → A → B
 coerce refl a = a
@@ -24,7 +27,8 @@ postulate
    T : Set
 
 ⟦_⟧C   : Con → Set
-⟦_⟧T   : ∀{Γ} → Ty Γ → ⟦ Γ ⟧C → Glob
+-- ⟦_⟧T   : ∀{Γ} → Ty Γ → ⟦ Γ ⟧C → Glob
+⟦_⟧T   : ∀{Γ} → Ty Γ → ⟦ Γ ⟧C → Set
 ⟦_⟧tm  : ∀{Γ A} → Tm A → (γ : ⟦ Γ ⟧C) 
         → ∣ ⟦ A ⟧T γ ∣
 ⟦_⟧S   : ∀{Γ Δ} → Γ ⇒ Δ → ⟦ Γ ⟧C → ⟦ Δ ⟧C
@@ -37,11 +41,11 @@ postulate
           Σ (⟦ Γ ⟧C) (λ γ  → ∣ ⟦ A ⟧T γ ∣)
 
 -- definitionel
-⟦_⟧T-β1  : ∀{Γ}{γ : ⟦ Γ ⟧C} → ⟦ * ⟧T γ ≡ {!!}
+-- ⟦_⟧T-β1  : ∀{Γ}{γ : ⟦ Γ ⟧C} → ⟦ * ⟧T γ ≡ {!!}
 -- definitionel
-⟦_⟧T-β2  : ∀{Γ A u v}{γ : ⟦ Γ ⟧C}
-          → ⟦ u =h v ⟧T γ ≡
-          ♭ (hom (⟦ A ⟧T γ) (⟦ u ⟧tm γ) (⟦ v ⟧tm γ))
+-- ⟦_⟧T-β2  : ∀{Γ A u v}{γ : ⟦ Γ ⟧C}
+--           → ⟦ u =h v ⟧T γ ≡
+--           ♭ (hom (⟦ A ⟧T γ) (⟦ u ⟧tm γ) (⟦ v ⟧tm γ))
           -- needed
 semSb-T   : ∀ {Γ Δ}(A : Ty Δ)(δ : Γ ⇒ Δ)(γ : ⟦ Γ ⟧C)
           → ⟦ A [ δ ]T ⟧T γ ≡ ⟦ A ⟧T (⟦ δ ⟧S γ)
@@ -104,9 +108,9 @@ semWk-tm : ∀ {Γ A B}(γ : ⟦ Γ ⟧C)(v : ∣ ⟦ B ⟧T γ ∣)
 ⟦_⟧C-β2 {Γ} {Δ} = {!!}
 
 -- definitionel
-⟦_⟧T-β1 {Γ} {γ} = {!!}
+-- ⟦_⟧T-β1 {Γ} {γ} = {!!}
 -- definitionel
-⟦_⟧T-β2 {Γ} {A} {u} {v} {γ} = {!!}
+-- ⟦_⟧T-β2 {Γ} {A} {u} {v} {γ} = {!!}
 
 -- needed
 semSb-T {Γ}  {Δ} A δ γ = {!!}
