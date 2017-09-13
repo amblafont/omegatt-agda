@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K --no-termination-check #-}
 
 
 module Semantics where
@@ -11,7 +11,7 @@ open import Coinduction
 open import Relation.Binary.PropositionalEquality hiding ([_])
 open import GroupoidStructure
 
-open import GlobularTypes renaming (∣_∣ to 〚_〛)
+-- open import GlobularType (∣_∣ to 〚_〛)
 
 
 ∣_∣ : {A : Set₁} → A → A
@@ -22,6 +22,13 @@ coerce refl a = a
 
 ⊤-uni : ∀ {A : Set}{a b : A} → A ≡ ⊤ → a ≡ b
 ⊤-uni refl = refl
+
+-- inspiré de EqHom
+-- EqHom : {A B : Glob} → (p : A ≡ B) → {x y : ∣ A ∣} → {m n : ∣ B ∣} → (subst ∣_∣ p x ≡ m) → (subst ∣_∣ p y ≡ n) → ♭ (hom A x y) ≡ ♭ (hom B m n)
+-- EqHom {.B} {B} refl {.m} {.n} {m} {n} refl refl = refl
+EqEq : {A B : Set} → (p : A ≡ B) → {x y : A} → {m n : B} → (subst ∣_∣ p x ≡ m)
+  → (subst ∣_∣ p y ≡ n) → (x ≡ y) ≡ (m ≡ n)
+EqEq {.B} {B} refl {.m} {.n} {m} {n} refl refl = refl
 
 postulate
    T : Set
@@ -95,17 +102,30 @@ semWk-tm : ∀ {Γ A B}(γ : ⟦ Γ ⟧C)(v : ∣ ⟦ B ⟧T γ ∣)
 ⟦coh⟧  : ∀{Θ} → isContr Θ → (A : Ty Θ) 
         → (θ : ⟦ Θ ⟧C) → ∣ ⟦ A ⟧T θ ∣
 
-⟦_⟧C Γ = {!!} 
+⟦ ε ⟧C = ⊤
+⟦ Γ , A ⟧C = Σ (⟦ Γ ⟧C) (λ γ  → ∣ ⟦ A ⟧T γ ∣) 
 
-⟦_⟧T {Γ} A γ = {!!}
-⟦_⟧tm  {Γ} {A} t γ  = {!!}
-⟦_⟧S   {Γ} {Δ} σ γ = {!!}
-π {Γ} {Δ} x γ = {!!}
+⟦_⟧T {Γ} * γ = T
+⟦_⟧T {Γ} (a =h b) γ = ⟦ a ⟧tm γ ≡ ⟦ b ⟧tm γ
 
- -- definitionel
-⟦_⟧C-β1 = {!!}
+⟦_⟧tm {Γ} {A} (var x) γ = π x γ
+-- ici j'ai besoin de désactiver le termination checker
+⟦_⟧tm {Γ} {.(A [ δ ]T)} (coh isC δ A) γ = subst ∣_∣ (sym (semSb-T A δ γ )) (⟦coh⟧ isC A (⟦ δ ⟧S γ))
+-- ∣ ⟦ A [ δ ]T ⟧T γ ∣ → ∣ ⟦ A ⟧T (⟦ δ ⟧S γ) ∣
+-- (⟦coh⟧ isC A (⟦ δ ⟧S γ))
+
+⟦_⟧S {Γ} {.ε} • γ = tt
+⟦_⟧S {Γ} {.(Δ , A)} (_,_ {Δ = Δ} σ {A} a) γ =
+   ⟦ σ ⟧S γ ,, subst  ∣_∣ (semSb-T A σ γ) (⟦ a ⟧tm γ)
+
 -- definitionel
-⟦_⟧C-β2 {Γ} {Δ} = {!!}
+⟦_⟧C-β1 = refl
+-- definitionel
+⟦_⟧C-β2 {Γ} {Δ} = refl
+π {.(Γ , A)} {.(A +T A)} (v0 {Γ} {A}) (γ ,, v) = subst ∣_∣ (sym (semWk-T {A = A} γ v)) v 
+π {.(Γ , B)} {.(A +T B)} (vS {Γ} {A} {B} x) (γ ,, v) = subst ∣_∣ (sym (semWk-T {A = A} γ v)) (π x γ)
+-- (semWk-T {A = A} {B} γ v)
+-- Have: ⟦ A +T B ⟧T (γ ,, v) ≡ ⟦ A ⟧T γ
 
 -- definitionel
 -- ⟦_⟧T-β1 {Γ} {γ} = {!!}
@@ -113,32 +133,63 @@ semWk-tm : ∀ {Γ A B}(γ : ⟦ Γ ⟧C)(v : ∣ ⟦ B ⟧T γ ∣)
 -- ⟦_⟧T-β2 {Γ} {A} {u} {v} {γ} = {!!}
 
 -- needed
-semSb-T {Γ}  {Δ} A δ γ = {!!}
+semSb-T {Γ} {Δ} * δ γ = refl
+semSb-T {Γ} {Δ} (a =h b) δ γ = EqEq (semSb-T _ δ γ) (semSb-tm a δ γ)(semSb-tm b δ γ)
+-- rewrite (sym (semSb-tm a δ γ)) | (sym (semSb-tm b δ γ))
+--    = {! !}
+
+-- ajout
+semSb-V :  {Γ : Con} {Δ : Con} {A : Ty Δ} (x : Var A) (δ : Γ ⇒ Δ) (γ : ⟦ Γ ⟧C)
+ → subst ∣_∣ (semSb-T A δ γ) (⟦ x [ δ ]V ⟧tm γ) ≡ π x (⟦ δ ⟧S γ)
 
 -- needed
-semSb-tm {Γ} {Δ} {A} a δ γ = {!!}
+semSb-tm {Γ} {Δ} {A} (var x) δ γ = semSb-V x δ γ
+semSb-tm {Γ} {Δ} {.(A [ δ ]T)} (coh x δ A) δ₁ γ = {!!}
+
+
+semSb-V {Γ₁} {.(_ , _)} {.(_ +T _)} v0 δ γ = {!!}
+semSb-V {Δ} {.(Γ , B)} {.(A +T B)} (vS {Γ} {A} {B} x) (δ , a) γ rewrite
+   (sym (semSb-V x δ γ))= {!semSb-V x δ γ!}
+   -- avec UIP ça passe
 
 -- needed
-semSb-S {Γ} {Δ} {Θ} γ δ sΘ = {!!}
+semSb-S {Γ} {Δ} {.ε} γ δ • = refl
+semSb-S {Γ} {Δ} {.(_ , _)} γ δ (sΘ , a) = {!semSb-S γ δ sΘ!}
 
-⟦_⟧tm-β1 {Γ} {A} {x} {γ} = {!!}
+
+⟦_⟧tm-β1 {Γ} {A} {x} {γ} = refl
 
 -- définitionnel
-⟦_⟧S-β1 {Γ} {γ} = {!!}
+⟦_⟧S-β1 {Γ} {γ} = refl
 
 ⟦_⟧S-β2 {Γ} {Δ} {A} {δ} {γ}
-          {a} = {!!}
--- needed
-semWk-T {Γ} {A} {B} γ v = {!!} 
+          {a} = refl
 
-
-semWk-S {Γ} {Δ} {B} {γ} {v} δ = {!!}
 
 -- needed
-semWk-tm {Γ} {A} {B} γ v a = {!!}
+semWk-T {Γ} {*} {B} γ v = refl
+semWk-T {Γ} {_=h_ {A} a b} {B} γ v  = EqEq (semWk-T γ v) (semWk-tm γ v a) (semWk-tm γ v b)
 
-π-β1 {Γ} {A}  γ v = {!!}
 
-π-β2 {Γ} {A} {B} x γ v = {!!}
+semWk-S {Γ} {.ε} {B} {γ} {v} • = refl
+semWk-S {Γ} {.(_ , _)} {B} {γ} {v} (δ , a) = {!!}
 
-⟦coh⟧  {Θ} isC A sθ = {!!}
+-- needed
+semWk-tm {Γ} {A} {B} γ v (var x) rewrite semWk-T {A = A} γ v = refl
+semWk-tm {Γ} {.(A [ δ ]T)} {B} γ v (coh x δ A) = {!!}
+
+π-β1 {Γ} {A}  γ v rewrite (semWk-T {A = A} γ v) = refl
+
+π-β2 {Γ} {A} {B} x γ v rewrite (semWk-T {A = A} γ v) = refl
+
+⟦coh⟧ {.(ε , *)} c* * (a ,, b) = b
+⟦coh⟧ {.(ε , *)} c* (a =h b) (u ,, v) = {!!}
+-- ⟦coh⟧ {.(Γ , A , (var (vS x) =h var v0))} (ext {Γ} isC {A} x) B ((γ ,, α) ,, β) =
+--   {!!}
+
+-- on peut eliminer ce cas
+⟦coh⟧ {.(Γ , A , (var (vS x) =h var v0))} (ext {Γ} isC {A} x) * ((γ ,, α) ,, β) = {!!}
+⟦coh⟧ {.(Γ , A , (var (vS x) =h var v0))} (ext {Γ} isC {A} x) (_=h_ {C} a b) ((γ ,, α) ,, β) =
+  {!⟦coh⟧ isC A γ!}
+-- {!⟦coh⟧ isC A γ!}
+  -- ⟦coh⟧ isC A γ!
