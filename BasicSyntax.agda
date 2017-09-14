@@ -8,9 +8,9 @@ open import Relation.Binary.PropositionalEquality
 open import Function
 open import Data.Product renaming (_,_ to _,,_)
 
+{-# BUILTIN REWRITE _≡_ #-}
 -- # BUILTIN EQUALITY _≡_  #
 
-infix 4 _≅_
 infix 4 _=h_
 -- infixl 6 _+T_ _+S_ _+tm_
 infixl 5 _,_
@@ -29,10 +29,6 @@ data Ty Γ where
   *     : Ty Γ
   _=h_  : {A : Ty Γ}(a b : Tm A) → Ty Γ
   _[_]T : {Δ : Con} → Ty Δ → Γ ⇒ Δ → Ty Γ
-
-data _≅_ {Γ : Con}{A : Ty Γ} :
-         {B : Ty Γ} → Tm A → Tm B → Set where
-  refl : (b : Tm A) → b ≅ b
 
 
 
@@ -65,8 +61,12 @@ data isContr where
 
 postulate
   [id]T : ∀{Γ}{A : Ty Γ} → A [ idTms ]T ≡ A
+  [][]T'-id : ∀{Γ Δ Σ}{A : Ty Σ}{δ : Δ ⇒ Σ}
+   → (A [ δ ]T [ idTms ]T) ≡ (A [ δ ]T )
+  [][]T' : ∀{Γ Δ Σ}{A : Ty Σ}{σ : Γ ⇒ Δ}{δ : Δ ⇒ Σ}
+    → (A [ δ ■ σ ]T) ≡ (A [ δ ]T [ σ ]T)
   [][]T : ∀{Γ Δ Σ}{A : Ty Σ}{σ : Γ ⇒ Δ}{δ : Δ ⇒ Σ}
-    → (A [ δ ]T [ σ ]T) ≡ (A [ δ ■ σ ]T)
+    →  (A [ δ ]T [ σ ]T) ≡ (A [ δ ■ σ ]T)
 
   idl   : ∀{Γ Δ}{δ : Tms Γ Δ} → (idTms ■ δ) ≡ δ 
   idr   : ∀{Γ Δ}{δ : Tms Γ Δ} → (δ ■ idTms) ≡ δ 
@@ -80,16 +80,28 @@ postulate
     → σ ≡ •
 
 {-# REWRITE [id]T #-}
-{-# REWRITE [][]T #-}
 {-# REWRITE idl #-}
 {-# REWRITE idr #-}
 {-# REWRITE ass #-}
 {-# REWRITE π₁β #-}
 {-# REWRITE πη #-}
-{-# REWRITE εη #-}
 
-  -- ,∘    : ∀{Γ Δ Σ}{δ : Tms Γ Δ}{σ : Tms Σ Γ}{A : Ty Δ}{a : Tm Γ (A [ δ ]T)}
-  --   → ((δ ,  a) ■ σ) ≡ ((δ ■ σ) ,  coe (TmΓ= [][]T) (a [ σ ]t))
-  -- π₂β   : ∀{Γ Δ}{A : Ty Δ}{δ : Γ  ⇒ Δ}{a : Tm Γ (A [ δ ]T)}
-  --   → π₂ (δ ,  a) ≡[ TmΓ= ([]T=′ refl refl refl π₁β) ]≡ a
+{-# REWRITE [][]T' #-}
+-- {-# REWRITE εη #-}
 
+
+postulate
+  ,∘    : ∀{Γ Δ Σ}{δ : Tms Γ Δ}{σ : Tms Σ Γ}{A : Ty Δ}{a : Tm (A [ δ ]T)}
+   → ((δ ,  a) ■ σ) ≡ ((δ ■ σ) , subst Tm ([][]T {A = A} {σ = σ} {δ = δ} ) (a [ σ ]tm))
+   -- simplifié par le rewrite par rapport à TT/Core.agda
+  π₂β   : ∀{Γ Δ}{A : Ty Δ}{δ : Γ  ⇒ Δ}{a : Tm  (A [ δ ]T)}
+    → π₂ (δ ,  a) ≡ a
+
+
+postulate
+   ≃[] : ∀{Γ Θ A}{u v : Tm A}{σ : Tms Θ Γ} → ( u =h v )[ σ ]T ≡ ((u [ σ ]tm) =h (v [ σ ]tm))
+   coherence[] : ∀{Δ Γ Θ} → {A : Ty Δ} {δ : Tms Γ Δ} {p : isContr Δ} {σ : Tms Θ Γ}
+      → subst Tm ([][]T {A = A} {σ = σ} {δ = δ} ) ((coh p δ A ) [ σ ]tm) ≡  (coh p (δ ■ σ) _)
+
+
+-- {-# REWRITE ≃[] #-}
