@@ -11,12 +11,11 @@ postulate  -- HIT
 data Con           : Set
 data Ty (Γ : Con)  : Set
 data Tm            : {Γ : Con}(A : Ty Γ) → Set
--- data Var           : {Γ : Con}(A : Ty Γ) → Set
 data _⇒_           : Con → Con → Set
 data isContr       : Con → Set
 
 infix 4 _=h_
-infixl 5 _,_
+infixl 5 _,_ _∘_
 
 data Con where
   ε     : Con
@@ -32,7 +31,7 @@ data _⇒_ where
   _,_  : ∀{Γ Δ}(δ : Γ ⇒ Δ){A : Ty Δ}(a : Tm (A [ δ ]T)) → Γ ⇒ (Δ , A)
   π₁ : ∀ {Γ} {A : Ty Γ} → (Γ , A) ⇒ Γ
   -- idTms    : ∀{Γ} → Γ ⇒ Γ
-  -- _■_   : ∀{Γ Δ Σ} → Tms Δ Σ → Tms Γ Δ → Tms Γ Σ
+  _∘_   : ∀{Γ Δ Σ} → Δ ⇒ Σ → Γ ⇒ Δ → Γ ⇒ Σ
 
 -- id-sub : ∀ {Γ} → Γ ⇒ Γ
 -- id-sub {ε} = •
@@ -42,15 +41,32 @@ data _⇒_ where
 -- π₁ {Γ} {A} with id-sub {Γ , A}
 -- π₁ {Γ} {A} | x , a = x
 
+-- _∘'_   : ∀{Γ Δ Σ} → Δ ⇒ Σ → Γ ⇒ Δ → Γ ⇒ Σ
+-- σ ∘' τ = {!!}
+
 data Tm where
   coh : ∀ {Γ} → (A : Ty Γ) → isContr Γ → Tm A
   _[_]tm : ∀{Γ Δ}{A : Ty Δ} → Tm A → (σ : Γ ⇒ Δ) → Tm (A [ σ ]T)
   var : ∀ {Γ} (A : Ty Γ) → Tm {Γ , A} (A [ π₁ ]T)
 
-
 data isContr where
   c*   : isContr (ε , *)
-  ext   : ∀ {Γ} {A} → {t : Tm A} → isContr Γ → isContr (Γ , A , (var A =h (t [ π₁ ]tm) ))
+  ext   : ∀ {Γ} {A} → {t : Tm A} → isContr Γ → isContr (Γ , A , (t [ π₁ ]tm =h var A))
+
+postulate
+
+  ∘T : ∀{Γ Δ Σ} (A : Ty Σ) (σ : Δ ⇒ Σ) (τ : Γ ⇒ Δ) → (A [ σ ∘ τ ]T) ↦ ((A [ σ ]T) [ τ ]T)
+
+{-# REWRITE ∘T #-}
+
+-- postulate
+
+--   ∘e : ∀{Γ Δ Σ} (A : Ty Σ) (B : Ty (Σ , A)) (σ : Δ ⇒ Σ) (τ : Γ ⇒ Δ) (t : Tm (A [ σ ]T)) → (B [ (σ ∘ τ , (t [ τ ]tm)) ]T) ↦ ((B [ σ , t ]T) [ τ ]T)
+
+-- {-# REWRITE ∘e #-}
+
+
+
 
 wkT : ∀ {Γ} {A : Ty Γ} (B : Ty Γ) → Ty (Γ , A)
 wkT {Γ} {A} B = B [ π₁ ]T
@@ -61,12 +77,23 @@ wk t = t [ π₁ ]tm
 vz : ∀ {Γ} {A : Ty Γ} → Tm {Γ , A} (A [ π₁ ]T)
 vz {Γ} {A} = var A
 
-vs : ∀ {Γ} {A B : Ty Γ} (t : Tm A) → Tm {Γ , B} (wkT A)
-vs t = {!!}
-
 identity : Tm {ε , * } (var {ε} * =h var {ε} *) 
 identity = coh (var {ε} * =h var {ε} *) c*
 
-composition : Tm {ε , * , wkT * , (var (wkT *) =h (wk (var *))) , wkT (wkT *) , (var {!!} =h wk (wk {!!}))} {!!}
-composition = {!!}
-  
+arrow-con : Con
+arrow-con = ε , * , wkT * , ((wk (var *) =h var (wkT *)))
+
+comp-con : Con
+--             x    y                   f                         z                      y                       z
+comp-con = ε , * , wkT * , (wk (var *) =h var (wkT *)) , wkT (wkT (wkT *)) , (wk (wk (var (wkT *))) =h var (wkT (wkT (wkT *))))
+
+composition : Tm {comp-con} (wk (wk (wk (wk (var *)))) =h wk (var (wkT (wkT (wkT *)))))
+composition = coh (wk (wk (wk (wk (var *)))) =h wk (var (wkT (wkT (wkT *)))))
+              (ext (ext c*))
+
+
+unit-right : Tm {arrow-con} ({!!} =h {!!})
+unit-right = {!!}
+
+  where σ : arrow-con ⇒ comp-con
+        σ = π₁ ∘ (π₁ ∘ π₁) , wk (wk (var *)) , {!Tm (wkT * [ π₁ ∘ (π₁ ∘ π₁) , wk (wk (var *)) ]T)!} , {!!} , {!!} , {!!}
