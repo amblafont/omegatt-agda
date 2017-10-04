@@ -4,9 +4,11 @@
 module BasicSyntax where 
 
 
-open import Relation.Binary.PropositionalEquality
+-- open import Relation.Binary.PropositionalEquality
+open import lib
 open import Function
-open import Data.Product renaming (_,_ to _,,_)
+-- open import Data.Product renaming (_,_ to _,,_)
+
 
 
 infix 4 _≅_
@@ -73,6 +75,11 @@ data _⇒_ where
   •    : ∀{Γ} → Γ ⇒ ε
   _,_  : ∀{Γ Δ}(δ : Γ ⇒ Δ){A : Ty Δ}(a : Tm (A [ δ ]T))
        → Γ ⇒ (Δ , A)
+
+_,S_ : ∀{Γ Δ}(δ : Γ ⇒ Δ){A : Ty Δ}(a : Tm (A [ δ ]T))
+  → Γ ⇒ (Δ , A)
+_,S_ = _,_
+
 _+T_   : ∀{Γ}(A : Ty Γ)(B : Ty Γ) → Ty (Γ , B)
 _+tm_  : ∀{Γ A}(a : Tm A)(B : Ty Γ) → Tm (A +T B)   
 _+S_   : ∀{Γ Δ}(δ : Γ ⇒ Δ)(B : Ty Γ) → (Γ , B) ⇒ Δ   
@@ -131,16 +138,37 @@ hom≡ : {Γ : Con}{A A' : Ty Γ}
                 {a : Tm A}{a' : Tm A'}(q : a ≅ a')
                 {b : Tm A}{b' : Tm A'}(r : b ≅ b')
                 → (a =h b) ≡ (a' =h b')
-hom≡ {Γ} {A} {A'} {a} {a'} (refl _) {b} {b'} r rewrite Tm≅≡ r = refl
+hom≡ {Γ} {A} {A'} {a} {a'} (refl _) {b} {b'} r with Tm≅≡ r
+hom≡ {Γ} {A} {.A} {.b₁} {.b₁} (refl b₁) {b} {.b} r | refl = refl
+-- rewrite Tm≅≡ r = refl
 --hom≡ {Γ} {.A'} {A'} {.a'} {a'} (refl .a') {.b'} {b'} (refl .b') = refl
 
+S-eq' : {Γ Δ : Con}{γ δ : Γ ⇒ Δ}{A : Ty Δ}
+  {a : Tm (A [ γ ]T)}
+  -- {a' : Tm (A [ δ ]T)} 
+  -- (e : A [ γ ]T ≡ A [ δ ]T)
+  → (e : γ ≡ δ  )
+  → _≡_ {_} {Γ ⇒ (Δ , A)} (γ , a) (δ , transport (λ x → Tm (A [ x ]T)) e a)
+-- S-eq refl (refl _) = refl
+S-eq'  refl = refl
+
+,S= : ∀{Γ Δ}{δ : Γ ⇒ Δ}{γ : Γ ⇒ Δ}(e : δ ≡ γ){A : Ty Δ}(b : Tm (A [ δ ]T))
+   (b' : _) →
+    b ≡[ ap (λ x → Tm (A [ x ]T)) e ]≡ b' → _≡_ (δ ,S b) (γ ,S b')
+,S= refl b .b refl = refl
+-- Σ≡,S  : ∀{Γ Δ}{δ : Γ ⇒ Δ}{γ : Γ ⇒ Δ}(e : δ ≡ γ){A : Ty Δ}(a : Tm (A [ δ ]T)) →
+--   δ ,S a ≡ γ ,S  transport (λ x → Tm (A [ x ]T)) e a
+
+-- Σ≡,S refl a = refl
 
 S-eq : {Γ Δ : Con}{γ δ : Γ ⇒ Δ}{A : Ty Δ}
         {a : Tm (A [ γ ]T)}{a' : Tm (A [ δ ]T)} 
         → γ ≡ δ → a ≅ a' 
         → _≡_ {_} {Γ ⇒ (Δ , A)} (γ , a) (δ , a')
--- S-eq refl (refl _) = refl
-S-eq refl e rewrite Tm≅≡ e = refl
+        -- S-eq refl (refl _) = refl
+S-eq refl e with Tm≅≡ e
+... | refl = refl
+-- rewrite Tm≅≡ e = refl
 
 [⊚]T    : ∀{Γ Δ Θ A}{θ : Δ ⇒ Θ}{δ : Γ ⇒ Δ} 
         → A [ θ ⊚ δ ]T ≡ (A [ θ ]T)[ δ ]T  
@@ -244,7 +272,10 @@ wk-⊚ : {Γ Δ Θ : Con}
 wk-⊚ t = t ⟦ [⊚]T ⟫
 
 [+S]S {δ = •} = refl
-[+S]S {δ = δ , a} = S-eq [+S]S (cohOp [⊚]T ∾ ([+S]tm a ∾ cong+tm2 [⊚]T) ∾ wk-coh+ -¹)
+[+S]S {B = B} {_,_ δ {A} a} {γ} = S-eq [+S]S (cohOp [⊚]T ∾ ([+S]tm a ∾ cong+tm2 [⊚]T) ∾ wk-coh+ -¹)
+-- trop compliqué. Utilisons la version UIP
+  -- ,S= ([+S]S {B = B} {δ = δ} {γ}) _ _ {!!}
+-- S-eq [+S]S (cohOp [⊚]T ∾ ([+S]tm a ∾ cong+tm2 [⊚]T) ∾ wk-coh+ -¹)
 
 
 wk+S+T : ∀{Γ Δ : Con}{A : Ty Γ}{B : Ty Δ}
