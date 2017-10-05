@@ -548,7 +548,7 @@ set2h1 {A = A} isSetA {x}{y}{p}{q} r s = w r ⁻¹ ◾ w s
 
 -- pour mon développement
 subst : ∀{ℓ ℓ'}{A : Set ℓ}(P : A → Set ℓ'){x y : A}(p : x ≡ y) → P x → P y
-subst = transport
+subst P p = coe (ap P p)
 
 sym : ∀{ℓ}{A : Set ℓ}{x y : A} → x ≡ y → y ≡ x
 sym = _⁻¹

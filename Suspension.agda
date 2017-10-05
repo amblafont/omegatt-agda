@@ -4,10 +4,11 @@ module Suspension where
 
 open import BasicSyntax
 open import IdentityContextMorphisms
-open import Relation.Binary.PropositionalEquality 
-open import Data.Product renaming (_,_ to _,,_)
-open import Data.Empty
-open import Data.Nat
+-- open import Relation.Binary.PropositionalEquality 
+-- open import Data.Product renaming (_,_ to _,,_)
+-- open import Data.Empty
+-- open import Data.Nat
+open import lib
 
 
 1-1S-same : {Γ : Con}{A B : Ty Γ} → 

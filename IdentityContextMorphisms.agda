@@ -4,10 +4,11 @@ module IdentityContextMorphisms where
 
 
 open import BasicSyntax
-open import Relation.Binary.PropositionalEquality 
-open import Data.Product renaming (_,_ to _,,_)
-open import Data.Nat
-
+open import lib
+-- open import Relation.Binary.PropositionalEquality 
+-- open import Data.Product renaming (_,_ to _,,_)
+-- open import Data.Nat
+{-# BUILTIN NATURAL ℕ #-}
 level                 : ∀ {Γ} → Ty Γ → ℕ
 level *               = 0
 level (_=h_ {A} _ _)  = suc (level A) 

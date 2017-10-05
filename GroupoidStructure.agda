@@ -3,9 +3,10 @@
 
 module GroupoidStructure where
 
-open import Relation.Binary.PropositionalEquality 
-open import Data.Product renaming (_,_ to _,,_)
-open import Data.Nat
+open import lib
+-- open import Relation.Binary.PropositionalEquality 
+-- open import Data.Product renaming (_,_ to _,,_)
+-- open import Data.Nat
 
 
 open import BasicSyntax renaming (_∾_ to htrans)
