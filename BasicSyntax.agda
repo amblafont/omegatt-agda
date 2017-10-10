@@ -109,8 +109,11 @@ coh-eq refl = refl _
 
 data isContr where
   c*   : isContr (ε , *)
-  ext  : ∀{Γ} → isContr Γ → {A : Ty Γ}(x : Var A) 
-       → isContr (Γ , A , (var (vS x) =h var v0))     
+  ext  : ∀{Γ} → isContr Γ → {A : Ty Γ}
+      (t : Var A)
+     -- (t : Tm A) 
+       -- → isContr (Γ , A , (t +tm A =h var v0))     
+       → isContr (Γ , A , (var (vS t) =h var v0))     
 
 postulate
   Ty-uip : {Γ : Con} {A B : Ty Γ} (e e' : A ≡ B) -> e  ≡ e'
@@ -201,8 +204,12 @@ wk-tm+ B t  = t ⟦ [+S]T ⟫
 
 [+S]T {A = *}     = refl
 [+S]T {A = a =h b} = hom≡ ([+S]tm a) ([+S]tm b)
++T[,]T'    : ∀{Γ Δ} A B(δ : Γ ⇒ Δ){b : Tm (B [ δ ]T)} 
+  → (A +T B) [ δ , b ]T ≡ A [ δ ]T
 +T[,]T    : ∀{Γ Δ A B}{δ : Γ ⇒ Δ}{b : Tm (B [ δ ]T)} 
           → (A +T B) [ δ , b ]T ≡ A [ δ ]T
+
++T[,]T {A = A} {B} {δ} = +T[,]T' A B δ
 
 +tm[,]tm  : ∀{Γ Δ A B}{δ : Γ ⇒ Δ}{c : Tm (B [ δ ]T)}
           → (a : Tm A) 
@@ -300,8 +307,8 @@ wk+S+S eq = trans [+S]S (cong (λ x → x +S _) eq)
 [⊚]T {A = *} = refl
 [⊚]T {A = _=h_ {A} a b} = hom≡ ([⊚]tm _) ([⊚]tm _) 
 
-+T[,]T {A = *} = refl
-+T[,]T {A = _=h_ {A} a b} = hom≡  (+tm[,]tm _) (+tm[,]tm _)
++T[,]T' * B δ = refl
++T[,]T' (_=h_ {A} a b) B δ = hom≡  (+tm[,]tm _) (+tm[,]tm _)
 
 var x       [ δ ]tm = x [ δ ]V
 coh cΔ γ A  [ δ ]tm = coh cΔ (γ ⊚ δ) A ⟦ sym [⊚]T ⟫

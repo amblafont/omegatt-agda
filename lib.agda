@@ -128,6 +128,28 @@ ap3 : ∀{ℓ ℓ' ℓ'' ℓ'''}{A : Set ℓ}{B : Set ℓ'}{C : Set ℓ''}{D : S
     → f a₀ b₀ c₀ ≡ f a₁ b₁ c₁
 ap3 f refl refl refl = refl
 
+
+
+coe2 : ∀{ℓ }{A B : Set ℓ}(p : A ≡ B)
+   (a : _)
+   → coe p (coe (p ⁻¹) a) ≡ a
+
+coe2 refl a = refl
+
+coe2i : ∀{ℓ }{A B : Set ℓ}(p : A ≡ B)
+  (a : _)
+  → coe (p ⁻¹) (coe (p) a) ≡ a
+
+coe2i refl a = refl
+
+
+coe-inv : ∀{ℓ }{A B : Set ℓ}{p : A ≡ B}
+  {a : A}{b : B }
+  → coe p a ≡ b → a ≡ coe (p ⁻¹) b
+
+coe-inv {p = refl} q = q
+
+-- corollaire
 coe2r : ∀{ℓ ℓ'}{A : Set ℓ}{B : A → Set ℓ'}{a₀ a₁ : A}
         (a₂ : a₀ ≡ a₁){b₀ : B a₀}{b₁ : B a₁}
       → b₀ ≡[ ap B a₂ ]≡ b₁ → b₀ ≡ coe (ap B (a₂ ⁻¹)) b₁
@@ -147,6 +169,14 @@ coecoeap refl refl = refl
 coecoe : ∀{ℓ}{A B C : Set ℓ}(P : A ≡ B)(Q : B ≡ C){a : A}
        → coe Q (coe P a) ≡ coe (P ◾ Q) a
 coecoe refl refl = refl
+
+cccoe : ∀{ℓ}{A B C D : Set ℓ}(P : A ≡ B)(Q : B ≡ C)(R : C ≡ D){a : A}
+  → coe R (coe Q (coe P a)) ≡ coe (P ◾ Q ◾ R) a
+cccoe refl refl refl = refl
+
+coe4 : ∀{ℓ}{A B C D E : Set ℓ}(P : A ≡ B)(Q : B ≡ C)(R : C ≡ D)(S : D ≡ E){a : A}
+  → (coe S (coe R (coe Q (coe P a)))) ≡ coe (P ◾ Q ◾ R ◾ S) a
+coe4 refl refl refl refl = refl
 
 ≡= : ∀{ℓ}{A₀ A₁ : Set ℓ}(A₂ : A₀ ≡ A₁)
      {a₀ : A₀}{a₁ : A₁}(a₂ : a₀ ≡[ A₂ ]≡ a₁)
@@ -559,3 +589,192 @@ trans = _◾_
 cong : ∀{ℓ ℓ'}{A : Set ℓ}{B : Set ℓ'}(f : A → B){a₀ a₁ : A} (a₂ : a₀ ≡ a₁)
   → f a₀ ≡ f a₁
 cong = ap
+
+-- inspiré de EqHom
+-- EqHom : {A B : Glob} → (p : A ≡ B) → {x y : ∣ A ∣} → {m n : ∣ B ∣} → (subst ∣_∣ p x ≡ m) → (subst ∣_∣ p y ≡ n) → ♭ (hom A x y) ≡ ♭ (hom B m n)
+-- EqHom {.B} {B} refl {.m} {.n} {m} {n} refl refl = refl
+EqEq : {A B : Set} → (p : A ≡ B) → {x y : A} → {m n : B} → (subst idfun p x ≡ m)
+   → (subst idfun p y ≡ n) → (x ≡ y) ≡ (m ≡ n)
+EqEq {.B} {B} refl {.m} {.n} {m} {n} refl refl = refl
+
+-- cohérence pour semSb-iA
+coh-degueu2 : {A : Set} {P : A → Set}
+    -- P joue le roel de A[σ]
+   -- B joue le role de Δ
+   -- Q le role de A 
+   {B : Set} {Q : B → Set}
+   -- x[σ]
+   (fx : (a : A) → P a)
+-- y[σ]
+    (fy : (a : A) → P a)
+    -- x
+    (gx : (b : B) → Q b)
+    -- y
+    (gy : (b : B) → Q b)
+    (σ : A → B)
+    {id-B : B}
+    {id-A : A}
+    -- iA A
+    {i-A : P id-A}
+    {i-B : Q id-B}
+    (eixQ : gx id-B ≡ i-B)
+    (eiyQ : gy id-B ≡ i-B)
+    -- (eixP : fx id-B ≡ i-A)
+    -- (eiyP : fy id-B ≡ i-A)
+    -- subst-idA
+    (s-idA : σ id-A ≡ id-B)
+    -- semSb-T idA
+    (sb-T : P id-A ≡ Q (σ id-A) )
+    (sb-tm-x : subst idfun (sb-T) (fx id-A) ≡ gx (σ id-A))
+    (sb-tm-y : subst idfun (sb-T) (fy id-A) ≡ gy (σ id-A))
+    -- semSb-iA
+    (sb-iA : subst Q s-idA (subst idfun sb-T i-A) ≡ i-B)
+    →
+  coe (ap (λ v₁ → gx v₁ ≡ gy v₁) s-idA)
+  (coe
+    (ap (λ x₁ → x₁)
+      (EqEq sb-T sb-tm-x
+        sb-tm-y))
+    (coe2r sb-T sb-tm-x ◾
+  ap (coe (ap (λ x₁ → x₁) (sb-T ⁻¹)))
+  (coe2r s-idA
+   (apd gx s-idA)
+   ◾
+   ap (coe (ap Q (s-idA ⁻¹)))
+   eixQ)
+  ◾
+  coe2r sb-T
+  (coe2r s-idA sb-iA)
+  ⁻¹
+  ◾
+  (coe2r sb-T sb-tm-y ◾
+   ap (coe (ap (λ x₁ → x₁) (sb-T ⁻¹)))
+   (coe2r s-idA
+    (apd gy s-idA)
+    ◾
+    ap (coe (ap Q (s-idA ⁻¹)))
+    eiyQ)
+   ◾
+   coe2r sb-T
+   (coe2r s-idA sb-iA)
+   ⁻¹)
+  ⁻¹))
+  ≡ (eixQ ◾ eiyQ  ⁻¹)
+
+-- cohérence pour semSb-iA
+coh-degueu2 {A} {P} {B} {Q} fx fy gx gy σ {id-A = id-A} {i-A} eixQ eiyQ refl sb-T sb-tm-x sb-tm-y refl
+  =
+    
+   ap2 {A = gx (σ id-A) ≡ coe (ap idfun sb-T) i-A}
+     (λ z z' →
+        coe (ap (λ x₁ → x₁) (EqEq sb-T sb-tm-x sb-tm-y))
+        (coe2r sb-T sb-tm-x ◾ ap (coe (ap (λ x₁ → x₁) (sb-T ⁻¹))) z ◾
+         coe2r sb-T refl ⁻¹
+         ◾
+         (coe2r sb-T sb-tm-y ◾ ap (coe (ap (λ x₁ → x₁) (sb-T ⁻¹))) z' ◾
+          coe2r sb-T refl ⁻¹)
+         ⁻¹))
+         (◾lid _ ◾ apid _) (◾lid _ ◾ apid _)
+  ◾
+  
+    coh-degueu2-aux sb-T sb-tm-x sb-tm-y eiyQ eixQ
+  
+  where
+  coh-degueu2-aux : 
+      {Pid-A : Set}
+      {Qid-B : Set}
+      (sb-T : Pid-A ≡ Qid-B )
+      {i-A     : Pid-A}
+      {xxf : Pid-A}
+      {yyf : Pid-A}
+      {xx : Qid-B}
+      {yy : Qid-B}
+      (sb-tm-x : subst idfun (sb-T) xxf ≡ xx )
+      (sb-tm-y : subst idfun (sb-T) yyf ≡ yy )
+      (eiyQ    : yy ≡ coe (ap idfun sb-T) i-A)
+      (eixQ    : xx ≡ coe (ap idfun sb-T) i-A)
+      -- semSb-iA
+    →  coe (ap (λ x₁ → x₁) (EqEq sb-T sb-tm-x sb-tm-y))
+    (coe2r sb-T sb-tm-x ◾ ap (coe (ap (λ x₁ → x₁) (sb-T ⁻¹))) eixQ ◾
+    coe2r sb-T refl ⁻¹
+    ◾
+    (coe2r sb-T sb-tm-y ◾ ap (coe (ap (λ x₁ → x₁) (sb-T ⁻¹))) eiyQ ◾
+    coe2r sb-T refl ⁻¹)
+    ⁻¹)
+    ≡ (eixQ ◾ eiyQ ⁻¹)
+  coh-degueu2-aux refl refl refl refl refl = refl
+  -- coh-degueu2-aux sb-T sb-tm-x sb-tm-y eiyQ eixQ = {!sb-T!}
+
+-- J (λ {y} e → (sb-tm-x₁ : subst idfun e (fx id-A) ≡ gx (σ id-A))
+-- (sb-tm-y₁ : subst idfun sb-T (fy id-A) ≡ gy (σ id-A))
+-- (eiyQ₁ : gy (σ id-A) ≡ coe (ap idfun e) i-A)
+-- (eixQ₁ : gx (σ id-A) ≡ coe (ap idfun e) i-A) →
+-- coe (ap (λ x₁ → x₁) (EqEq sb-T sb-tm-x₁ sb-tm-y₁))
+-- (coe2r e sb-tm-x₁ ◾ ap (coe (ap (λ x₁ → x₁) (e ⁻¹))) eixQ₁ ◾
+-- coe2r e refl ⁻¹
+-- ◾
+-- (coe2r e sb-tm-y₁ ◾ ap (coe (ap (λ x₁ → x₁) (e ⁻¹))) eiyQ₁ ◾
+-- coe2r e refl ⁻¹)
+-- ⁻¹)
+-- ≡ (eixQ₁ ◾ eiyQ₁ ⁻¹)
+-- ) 
+
+-- (id-A : A)
+-- (id-B : B)
+-- (sb-T : P id-A ≡ Q id-B )
+-- (i-A     : P id-A)
+-- (xxf : P id-A)
+-- (yyf : P id-A)
+-- (xx : Q id-B)
+-- (yy : Q id-B)
+-- (sb-tm-x : subst idfun (sb-T) xxf ≡ xx )
+-- (sb-tm-y : subst idfun (sb-T) yyf ≡ yy )
+-- (eiyQ    : yy ≡ coe (ap idfun sb-T) i-A)
+-- (eixQ    : xx ≡ coe (ap idfun sb-T) i-A)
+
+
+coh4 : ∀{ℓ } → {A B C : Set ℓ} (p : A ≡ B) (q : B ≡ C)
+  (a : _)
+  → subst idfun (p ◾ q) a ≡ coe q (subst idfun p a)
+
+coh4 refl refl a = refl
+
+-- coeap3◾ : ∀{ℓ } → {A B  : Set ℓ} {P : A → B → Set} {a a' : A} {b b' : B}(p : a ≡ a') (q : _)
+--   (r : b ≡ b')
+--   (z : _)
+--   → subst idfun (ap (λ a → P a b) p ◾ q ◾ ap (P a') r) z ≡
+--     coe (ap ( P a') r) (coe q (coe (ap (λ a → P a b) p) z))
+
+-- coeap3◾ refl 
+
+-- ici pas de restriction pour l'élimination
+-- typiquement, P = _≡T_
+Eq2G : {l' : _}{l : _} {A B : Set l'} (P : {D : Set l'} → D → D → Set l)
+  (p : A ≡ B)
+  -- (Q : B → B → Set)
+  {a a' : A}
+  {b b' : B}
+  (e : subst idfun p a ≡ b)
+  (e' : subst idfun p a' ≡ b')
+  → P a a' ≡ P b b'
+
+Eq2G P refl refl refl =  refl
+
+
+--  R = reflT
+Refl2G : {l' : _}{l : _} {A B : Set l'} (P : {D : Set l'} → D → D → Set l)
+  (R : {D : Set l'} (d : D) → P d d)
+  (p : A ≡ B)
+-- (Q : B → B → Set)
+  {a  : A}
+  {b  : B}
+  (e : subst idfun p a ≡ b)
+  →  coe (Eq2G P p e e) (R a)  ≡ R b
+
+Refl2G P R refl refl =  refl
+
+∣_∣ : {l : _} {A : Set l} → A → A
+∣_∣ = idfun
+
+coerce : {A B : Set} → B ≡ A → A → B
+coerce refl a = a
