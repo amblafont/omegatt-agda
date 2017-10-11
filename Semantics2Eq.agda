@@ -12,11 +12,6 @@
 module Semantics2Eq (T : Set) where
 
 open import BasicSyntax
--- open import IdentityContextMorphisms
--- open import Data.Unit
--- open import Data.Product renaming (_,_ to _,,_)
--- open import Coinduction
--- open import GroupoidStructure
 open import lib
 open import libhomot
 
@@ -29,47 +24,24 @@ postulate
 
 
 
--- subst : ∀{ℓ ℓ'}{A : Set ℓ}(P : A → Set ℓ'){x y : A}(p : x ≡ y) → P x → P y
--- subst = transport
-
--- coe : {A B : Set} → B ≡ A → B → A
--- coe p a = subst (λ x → x) p a
-
-⊤-uni : ∀ {A : Set}{a b : A} → A ≡ ⊤ → a ≡ b
-⊤-uni refl = refl
-
-
--- postulate
---    T : Set
-
 ⟦_⟧C   : Con → Set
 ⟦_⟧T   : ∀{Γ} → Ty Γ → ⟦ Γ ⟧C → Set
 
 
--- ⟦_⟧T   : ∀{Γ} → Ty Γ → ⟦ Γ ⟧C → Glob
 ⟦_⟧tm  : ∀{Γ A} → Tm A → (γ : ⟦ Γ ⟧C) 
         → ∣ ⟦ A ⟧T γ ∣
 ⟦_⟧S   : ∀{Γ Δ} → Γ ⇒ Δ → ⟦ Γ ⟧C → ⟦ Δ ⟧C
 π      : ∀{Γ A} → Var A → (γ : ⟦ Γ ⟧C) 
         → ∣ ⟦ A ⟧T γ ∣
-        -- definitionel
+-- definitionel
 ⟦_⟧C-β1  : ⟦ ε ⟧C ≡ ⊤
 -- definitionel
 ⟦_⟧C-β2  : ∀ {Γ A} → (⟦ (Γ , A) ⟧C) ≡ 
           Σ (⟦ Γ ⟧C) (λ γ  → ∣ ⟦ A ⟧T γ ∣)
 
--- definitionel
--- ⟦_⟧T-β1  : ∀{Γ}{γ : ⟦ Γ ⟧C} → ⟦ * ⟧T γ ≡ {!!}
--- definitionel
--- ⟦_⟧T-β2  : ∀{Γ A u v}{γ : ⟦ Γ ⟧C}
---           → ⟦ u =h v ⟧T γ ≡
---           ♭ (hom (⟦ A ⟧T γ) (⟦ u ⟧tm γ) (⟦ v ⟧tm γ))
-          -- needed
 semSb-T   : ∀ {Γ Δ}(A : Ty Δ)(δ : Γ ⇒ Δ)(γ : ⟦ Γ ⟧C)
           → ⟦ A [ δ ]T ⟧T γ ≡ ⟦ A ⟧T (⟦ δ ⟧S γ)
 
--- semSb-[⊚]T   : ∀{Γ Δ Θ A}{θ : Δ ⇒ Θ}{δ : Γ ⇒ Δ} ∀ {Γ Δ}(A : Ty Δ)(δ : Γ ⇒ Δ)(γ : ⟦ Γ ⟧C)
---   → ⟦ A [ δ ]T ⟧T γ ≡ ⟦ A ⟧T (⟦ δ ⟧S γ)
 -- needed
 semSb-tm  : ∀{Γ Δ}{A : Ty Δ}(a : Tm A)(δ : Γ ⇒ Δ)
           (γ : ⟦ Γ ⟧C) → subst ∣_∣ (semSb-T A δ γ) 
@@ -129,8 +101,6 @@ semWk-tm : ∀ {Γ A B}(γ : ⟦ Γ ⟧C)(v : ∣ ⟦ B ⟧T γ ∣)
 ⟦_⟧tm {Γ} {A} (var x) γ = π x γ
 -- ici j'ai besoin de désactiver le termination checker
 ⟦_⟧tm {Γ} {.(A [ δ ]T)} (coh isC δ A) γ = subst ∣_∣ (sym (semSb-T A δ γ )) (⟦coh⟧ isC A (⟦ δ ⟧S γ))
--- ∣ ⟦ A [ δ ]T ⟧T γ ∣ → ∣ ⟦ A ⟧T (⟦ δ ⟧S γ) ∣
--- (⟦coh⟧ isC A (⟦ δ ⟧S γ))
 
 ⟦_⟧S {Γ} {.ε} • γ = tt
 ⟦_⟧S {Γ} {.(Δ , A)} (_,_ {Δ = Δ} σ {A} a) γ =
@@ -142,13 +112,6 @@ semWk-tm : ∀ {Γ A B}(γ : ⟦ Γ ⟧C)(v : ∣ ⟦ B ⟧T γ ∣)
 ⟦_⟧C-β2 {Γ} {Δ} = refl
 π {.(Γ , A)} {.(A +T A)} (v0 {Γ} {A}) (γ ,Σ v) = subst ∣_∣ (sym (semWk-T {A = A} γ v)) v 
 π {.(Γ , B)} {.(A +T B)} (vS {Γ} {A} {B} x) (γ ,Σ v) = subst ∣_∣ (sym (semWk-T {A = A} γ v)) (π x γ)
--- (semWk-T {A = A} {B} γ v)
--- Have: ⟦ A +T B ⟧T (γ ,, v) ≡ ⟦ A ⟧T γ
-
--- definitionel
--- ⟦_⟧T-β1 {Γ} {γ} = {!!}
--- definitionel
--- ⟦_⟧T-β2 {Γ} {A} {u} {v} {γ} = {!!}
 
 -- needed
 semSb-T {Γ} {Δ} * δ γ = refl
@@ -232,8 +195,6 @@ semSb-tm {Γ} {Δ} {.(A [ δ ]T)} (coh x δ A) δ₁ γ =
   -- (semSb-S γ δ₁ δ)
 
 
-
--- coe2l (( [⊚]T {A = A} {θ = δ} {δ = δ₁})) (sem-cohOp { a = coh x (δ ⊚ δ₁) A } (sym( [⊚]T {A = A} {θ = δ} {δ = δ₁})) γ ⁻¹)!}
 
 
 
@@ -419,12 +380,7 @@ J'utilise uip pour le démontrer
   )
     )
       )
-      -- Have: ⟦ a ⟧tm (⟦ δ ⟧S γ) ≡
-      -- subst ∣_∣ (semSb-T (A [ sΘ ]T) δ γ) (⟦ a [ δ ]tm ⟧tm γ)
-      -- (semSb-tm a δ γ)
        ))
--- {!,Σ= (semSb-S γ δ sΘ)!}
--- semSb-S {Γ} {Δ} {.(_ , _)} γ δ (sΘ , a) = {!semSb-S γ δ sΘ!}
 
 
 ⟦_⟧tm-β1 {Γ} {A} {x} {γ} = refl
@@ -703,15 +659,12 @@ coh-degueu1 refl P = refl
 -- JA {Δ} isC P d δ = {!!}
 JA {.(ε , *)} c* P d (tt ,Σ a) = d a
 JA {.(_ , A , (var (vS t) =h var v0))} (ext isC {A} t) P d (γ ,Σ z ,Σ u) =
--- le apT est bien légitime ici, car qu'importe les termes t et u, si leur type A est fibrant
--- alors t ≡T u est aussi fibrant
--- pareil pour le coe-cancelT
--- et aussi j'ai besoin de savoir que P est fibrant, que ⟦ A ⟧T γ est fibrant
-
   
   coe
   (ap (λ w → P (γ ,Σ z ,Σ w))
     (coe2 (Eq2G (_≡T_) (sym (semWk-T' A A γ z)) refl refl) u))
+    -- ⟦ A ⟧T γ est fibrant (facile : par récurrence sur A)
+    -- et il faut que P δ soit fibrant
   (JT {A = ⟦ A ⟧T γ}
   ( λ  {y} e → P ((γ ,Σ y) ,Σ (coe (Eq2G _≡T_ (sym (semWk-T' A A γ y)) refl refl) e)))
   (subst (λ w → P (γ ,Σ π t γ ,Σ w))
@@ -720,22 +673,8 @@ JA {.(_ , A , (var (vS t) =h var v0))} (ext isC {A} t) P d (γ ,Σ z ,Σ u) =
   (coe (Eq2G _≡T_ (sym (semWk-T' A A γ _)) refl refl ⁻¹) u)
   )
   
-  -- {!JA isC (λ δ' → P ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _)) d γ!}
-  -- Have: P
-  -- (γ ,Σ π t γ ,Σ
-  -- reflT' (subst ∣_∣ (sym (semWk-T γ (π t γ))) (π t γ)))
   
-{-
-  substT (λ v → P (γ ,Σ z ,Σ v))
-  (ap-coe-cancel' (ap ∣_∣ (sym (semWk-T {A = A} {B = A} γ z))) u)
-  (
-  JT {A = ⟦ A ⟧T γ}
-  ( λ  {y} e → P ((γ ,Σ y) ,Σ (apT (subst ∣_∣ (sym (semWk-T {A = A}{B = A} γ y) )) e)))
-  (JA isC (λ δ' → P ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _)) d γ)
-  (coe-cancel' ( ap ∣_∣ (sym (semWk-T {A = A} {B = A} γ z))) u)
-  )
-  
--}
+
 
 
 
@@ -743,6 +682,7 @@ JA {.(_ , A , (var (vS t) =h var v0))} (ext isC {A} t) P d (γ ,Σ z ,Σ u) =
 -- JA {.(ε , *)} c* P d (tt ,Σ a) = d a
 -- JA {.(_ , A , (t +tm A =h var v0))} (ext isC {A} t) P d δ = {!!}
 
+-- ok
 ⟦coh⟧ isC A δ = JA isC ⟦ A ⟧T (λ a → iA isC a A ) δ 
 
 -- A.4.4 par induction sur le type
@@ -831,11 +771,6 @@ semSb-iA isCΔ isCΓ σ a (_=h_ {A = A} x y) =
   
 
 
-refl' : {l  : _}{A : Set l} (a : A) → a ≡ a
-refl' a = refl
-
-refl'-eq : {l  : _}{A : Set l} (a : A) → refl' a ≡ refl
-refl'-eq a = refl
 
 -- subst-idA isCΔ isCΓ σ a = {!!}
 -- par récurrence sur σ et sur isCΓ
@@ -866,10 +801,10 @@ Je mets la preuve suivante en commentaire car agda met 15s à typer le fihcier
 ************************
 
 -}
-  -- admit
+   admit
 
 -- début du commentage hardcore
--- {-
+ {-
   -- ici est la difficulté
   -- ⟦ v ⟧ réécrit par eq-tm-iA donne
   --    (reflT' (iA isCΔ a ((A +T A) [ σ , u ]T)))
@@ -1473,9 +1408,9 @@ Je commente la preuve et je mets admit pour que ca compile plus vite
 
 ****************
 -}
-  -- admit
+   admit
   
--- {- 
+ {- 
   ap
     (λ z →
        coe
@@ -2285,8 +2220,8 @@ eq-var-iA (ext isC {A} t) a {.(B +T A +T (var (vS t) =h var v0))} (vS (vS {A = B
   Ici je mets admit pour que ça aille plus vite
   ************
   -}
-  -- admit-eq-var
-  -- {-
+   admit-eq-var
+   {-
   ap
     (λ z →
        coe

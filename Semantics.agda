@@ -4,20 +4,18 @@
 module Semantics (T : Set) where
 
 open import BasicSyntax
-open import IdentityContextMorphisms
+-- open import IdentityContextMorphisms
 -- open import Data.Unit
 -- open import Data.Product renaming (_,_ to _,,_)
-open import Coinduction
-open import GroupoidStructure
+-- open import Coinduction
+-- open import GroupoidStructure
 open import lib
-
--- open import GlobularType (∣_∣ to 〚_〛)
 
 postulate
    uip : {l : _} {A : Set l} {a : A} {b : A} (e : a ≡ b) (e' : a ≡ b) → e ≡ e'
 
-∣_∣ : {A : Set₁} → A → A
-∣ x ∣ = x
+∣_∣ : {l : _} {A : Set l} → A → A
+∣_∣ = idfun
 
 coerce : {A B : Set} → B ≡ A → A → B
 coerce refl a = a
@@ -31,19 +29,15 @@ coerce refl a = a
 ⊤-uni : ∀ {A : Set}{a b : A} → A ≡ ⊤ → a ≡ b
 ⊤-uni refl = refl
 
--- inspiré de EqHom
--- EqHom : {A B : Glob} → (p : A ≡ B) → {x y : ∣ A ∣} → {m n : ∣ B ∣} → (subst ∣_∣ p x ≡ m) → (subst ∣_∣ p y ≡ n) → ♭ (hom A x y) ≡ ♭ (hom B m n)
--- EqHom {.B} {B} refl {.m} {.n} {m} {n} refl refl = refl
-EqEq : {A B : Set} → (p : A ≡ B) → {x y : A} → {m n : B} → (subst ∣_∣ p x ≡ m)
-  → (subst ∣_∣ p y ≡ n) → (x ≡ y) ≡ (m ≡ n)
-EqEq {.B} {B} refl {.m} {.n} {m} {n} refl refl = refl
 
 -- postulate
 --    T : Set
 
 ⟦_⟧C   : Con → Set
--- ⟦_⟧T   : ∀{Γ} → Ty Γ → ⟦ Γ ⟧C → Glob
 ⟦_⟧T   : ∀{Γ} → Ty Γ → ⟦ Γ ⟧C → Set
+
+
+-- ⟦_⟧T   : ∀{Γ} → Ty Γ → ⟦ Γ ⟧C → Glob
 ⟦_⟧tm  : ∀{Γ A} → Tm A → (γ : ⟦ Γ ⟧C) 
         → ∣ ⟦ A ⟧T γ ∣
 ⟦_⟧S   : ∀{Γ Δ} → Γ ⇒ Δ → ⟦ Γ ⟧C → ⟦ Δ ⟧C
@@ -74,8 +68,7 @@ semSb-tm  : ∀{Γ Δ}{A : Ty Δ}(a : Tm A)(δ : Γ ⇒ Δ)
 
 -- needed
 semSb-S   : ∀ {Γ Δ Θ}(γ : ⟦ Γ ⟧C)(δ : Γ ⇒ Δ)
-          (θ : Δ ⇒ Θ) → ⟦ θ ⊚ δ ⟧S γ ≡ 
-          ⟦ θ ⟧S (⟦ δ ⟧S γ)
+          (θ : Δ ⇒ Θ) → ⟦ θ ⊚ δ ⟧S γ ≡ ⟦ θ ⟧S (⟦ δ ⟧S γ)
 ⟦_⟧tm-β1  : ∀{Γ A}{x : Var A}{γ : ⟦ Γ ⟧C}
           → ⟦ var x ⟧tm γ ≡ π x γ
 
@@ -154,21 +147,84 @@ semSb-T {Γ} {Δ} (_=h_ {A} a b) δ γ = EqEq (semSb-T A δ γ) (semSb-tm a δ �
 semSb-V :  {Γ : Con} {Δ : Con} {A : Ty Δ} (x : Var A) (δ : Γ ⇒ Δ) (γ : ⟦ Γ ⟧C)
  → subst ∣_∣ (semSb-T A δ γ) (⟦ x [ δ ]V ⟧tm γ) ≡ π x (⟦ δ ⟧S γ)
 
--- needed
-semSb-tm {Γ} {Δ} {A} (var x) δ γ = semSb-V x δ γ
-semSb-tm {Γ} {Δ} {.(A [ δ ]T)} (coh x δ A) δ₁ γ = {!!}
-
-
-coh-≅ : {Γ : Con}{A : Ty Γ} {B : Ty Γ} {t : Tm A} {u : Tm B} (e : t ≅ u)
-  (γ : ⟦ Γ ⟧C) → subst (λ x → ⟦ x ⟧T γ) (≅≡ e) (⟦ t ⟧tm γ) ≡ ⟦ u ⟧tm γ  
-
-coh-≅ (refl b) γ = refl
-
 -- autre manière de le voir
 sem-cohOp : {Γ : Con}{A B : Ty Γ}{a : Tm B}(p : A ≡ B) (γ : ⟦  Γ ⟧C)
    → coe (ap (λ x → ⟦ x ⟧T γ) p)  (⟦ a ⟦ p ⟫ ⟧tm γ) ≡ ⟦ a ⟧tm γ  
 
 sem-cohOp refl γ = refl
+
+sem-tm-γ :  {Γ : Con}{A : Ty Γ}(a : Tm A){γ : ⟦ Γ ⟧C}{δ : ⟦ Γ ⟧C}(p : γ ≡ δ) →
+  ⟦ a ⟧tm δ ≡ subst ⟦ A ⟧T p (⟦ a ⟧tm γ)
+
+sem-tm-γ a refl = refl
+
+sem-⟦coh⟧-γ : {Γ : Con}(isC : isContr Γ)(A : Ty Γ){γ : ⟦ Γ ⟧C}{δ : ⟦ Γ ⟧C}(p : γ ≡ δ) →
+  ⟦coh⟧ isC A δ ≡ subst ⟦ A ⟧T p ( ⟦coh⟧ isC A γ )
+
+sem-⟦coh⟧-γ isC A refl = refl
+
+-- needed
+semSb-tm {Γ} {Δ} {A} (var x) δ γ = semSb-V x δ γ
+semSb-tm {Γ} {Δ} {.(A [ δ ]T)} (coh x δ A) δ₁ γ = 
+  subst ∣_∣ (semSb-T (A [ δ ]T) δ₁ γ)
+    (⟦ coh x (δ ⊚ δ₁) A ⟦ sym [⊚]T ⟫ ⟧tm γ)
+  -- on commence par enlever le ⟦ _ ⟫
+  ≡⟨ ap (λ x → subst ∣_∣ (semSb-T (A [ δ ]T) δ₁ γ) x)
+          (coe2l (( [⊚]T {A = A} {θ = δ} {δ = δ₁}))
+          (sem-cohOp { a = coh x (δ ⊚ δ₁) A } (sym( [⊚]T {A = A} {θ = δ} {δ = δ₁})) γ ⁻¹)) ⁻¹ ⟩
+  -- _
+  subst ∣_∣ (semSb-T (A [ δ ]T) δ₁ γ)
+  (coe (ap (λ v → ⟦ v ⟧T γ) ( [⊚]T {A = A} {θ = δ} {δ = δ₁}))
+    (subst ∣_∣ (sym (semSb-T A (δ ⊚ δ₁) γ))
+    (⟦coh⟧ x A (⟦ δ ⊚ δ₁ ⟧S γ))))
+
+{-
+    On doit vérifier le même diagramme que pour semSb-S
+    on le fait par uip
+-}
+-- aplatissement
+  ≡⟨ 
+  coecoe
+     (ap (λ v → ⟦ v ⟧T γ) ( [⊚]T {A = A} {θ = δ} {δ = δ₁}))
+     (ap ∣_∣ (semSb-T (A [ δ ]T) δ₁ γ))
+  ◾
+  
+  coecoe (ap ∣_∣ (sym (semSb-T A (δ ⊚ δ₁) γ)))
+    (ap (λ v → ⟦ v ⟧T γ) ( [⊚]T {A = A} {θ = δ} {δ = δ₁}) ◾ ap ∣_∣ (semSb-T (A [ δ ]T) δ₁ γ))
+  
+  ◾
+  -- uip
+  
+  ap (λ e → coe e (⟦coh⟧ x A (⟦ δ ⊚ δ₁ ⟧S γ)))
+
+  (uip
+    (ap ∣_∣ (sym (semSb-T A (δ ⊚ δ₁) γ)) ◾
+      (ap (λ v → ⟦ v ⟧T γ) ( [⊚]T {A = A} {θ = δ} {δ = δ₁}) ◾ ap ∣_∣ (semSb-T (A [ δ ]T) δ₁ γ)))
+    (ap ⟦ A ⟧T (semSb-S γ δ₁ δ) ◾
+      ap ∣_∣ (sym (semSb-T A δ (⟦ δ₁ ⟧S γ))))
+  )
+  
+   
+  ◾
+  
+  coecoe (ap ⟦ A ⟧T (semSb-S γ δ₁ δ))
+    (ap ∣_∣ (sym (semSb-T A δ (⟦ δ₁ ⟧S γ))))
+    ⁻¹
+  
+  
+    ⟩
+    -- maintenant j'utilise semSb-S : ⟦ θ ⊚ δ ⟧S γ ≡ ⟦ θ ⟧S (⟦ δ ⟧S γ) 
+    ap (λ z →       subst ∣_∣ (sym (semSb-T A δ (⟦ δ₁ ⟧S γ))) z)
+    (sem-⟦coh⟧-γ x A (semSb-S γ δ₁ δ) ⁻¹)
+    
+  -- (semSb-S γ δ₁ δ)
+
+
+
+-- coe2l (( [⊚]T {A = A} {θ = δ} {δ = δ₁})) (sem-cohOp { a = coh x (δ ⊚ δ₁) A } (sym( [⊚]T {A = A} {θ = δ} {δ = δ₁})) γ ⁻¹)!}
+
+
+
 
 
 
@@ -314,7 +370,7 @@ semSb-S {Γ} {Δ} {.(Δ₁ , A)} γ δ (_,_ {Δ = Δ₁} sΘ {A} a) =
     {-
     On doit vérifier le diagramme suivant : 
 
-                        semSb-S
+                        [⊚]T
   ⟦ A [ σ ⊚ δ ] ⟧ γ ----------------> ⟦ A [σ][δ] ⟧ γ
          |                                   |
          |                                   |
@@ -451,20 +507,521 @@ by uip
 
 -- needed
 semWk-tm {Γ} {A} {B} γ v (var x) = coeap2 ( semWk-T {A = A} {B = B}  γ v)
-semWk-tm {Γ} {.(A [ δ ]T)} {B} γ v (coh x δ A) = {!!}
+
+semWk-tm {Γ} {.(A [ δ ]T)} {B} γ v (coh x δ A) = 
+  -- on élimine le ⟦ ⟫
+  
+   ap (λ z → subst ∣_∣ (semWk-T {A = A [ δ ]T}  {B = B} γ v) z)
+   (
+    (
+    coe2l ( [+S]T {A = A} {δ = δ})
+    (sem-cohOp {a = coh x (δ +S B) A }  (sym ( [+S]T {A = A} {δ = δ})) (γ ,Σ v) ⁻¹)
+    ⁻¹
+    )
+    )
+
+  ◾
+  {- 
+
+
+
+  même diagramme que pour semWk-S. On le montre par uip
+
+
+
+  -}
+
+  -- aplatissement
+  coecoe 
+    (ap (λ x₁ → ⟦ x₁ ⟧T (γ ,Σ v)) ( [+S]T {A = A} {δ = δ}))
+    (ap ∣_∣ (semWk-T {A = A [ δ ]T} {B = B} γ v))
+
+  ◾
+  coecoe
+  (ap ∣_∣ (sym (semSb-T A (δ +S B) (γ ,Σ v))))
+  (ap (λ x₁ → ⟦ x₁ ⟧T (γ ,Σ v)) ( [+S]T {A = A} {δ = δ}) ◾
+    ap ∣_∣ (semWk-T {A = A [ δ ]T} {B = B} γ v))
+
+  ◾
+  -- uip
+  
+  ap (λ e → coe e (⟦coh⟧ x A (⟦ δ +S B ⟧S (γ ,Σ v))))
+  (uip
+    (ap ∣_∣ (sym (semSb-T A (δ +S B) (γ ,Σ v))) ◾
+      (ap (λ x₁ → ⟦ x₁ ⟧T (γ ,Σ v)) ( [+S]T {A = A} {δ = δ}) ◾
+       ap ∣_∣ (semWk-T {A = A [ δ ]T} {B = B} γ v)))
+    (ap ⟦ A ⟧T (semWk-S {B = B} {γ = γ} {v = v} δ ) ◾ ap ∣_∣ (sym (semSb-T A δ γ)))
+  )
+
+
+    
+  ◾
+  
+  coecoe
+  (ap ⟦ A ⟧T (semWk-S {B = B} {γ = γ} {v = v} δ ))
+  (ap ∣_∣ (sym (semSb-T A δ γ)))
+  ⁻¹
+  
+  ◾
+  -- on expoite semwk-S : ⟦ δ +S B ⟧S (γ ,Σ v) ≡ ⟦ δ ⟧S γ
+  
+  ap (λ z → subst ∣_∣ (sym (semSb-T A δ γ)) z)
+  (
+  sem-⟦coh⟧-γ x A 
+    (semWk-S {B = B} {γ = γ} {v = v} δ )
+    ⁻¹
+    )
+  
+-- {!semWk-S {B = B} {γ = γ} {v = v} δ !}
+
+-- sem-cohOp
 
 π-β1 {Γ} {A}  γ v = coeap2 (semWk-T {A = A} {B = A} γ v)
 
 π-β2 {Γ} {A} {B} x γ v = coeap2 (semWk-T {A = A} {B = B} γ v)
 
-⟦coh⟧ {.(ε , *)} c* * (a ,Σ b) = b
-⟦coh⟧ {.(ε , *)} c* (a =h b) (u ,Σ v) = {!!}
--- ⟦coh⟧ {.(Γ , A , (var (vS x) =h var v0))} (ext {Γ} isC {A} x) B ((γ ,, α) ,, β) =
---   {!!}
+-- ⟦coh⟧ {.(ε , *)} c* * (a ,Σ b) = b
+-- ⟦coh⟧ {.(ε , *)} c* (a =h b) (u ,Σ v) = {!!}
+-- -- ⟦coh⟧ {.(Γ , A , (var (vS x) =h var v0))} (ext {Γ} isC {A} x) B ((γ ,, α) ,, β) =
+-- --   {!!}
 
--- on peut eliminer ce cas
-⟦coh⟧ {.(Γ , A , (var (vS x) =h var v0))} (ext {Γ} isC {A} x) * ((γ ,Σ α) ,Σ β) = {!!}
-⟦coh⟧ {.(Γ , A , (var (vS x) =h var v0))} (ext {Γ} isC {A} x) (_=h_ {C} a b) ((γ ,Σ α) ,Σ β) =
-  {!⟦coh⟧ isC A γ!}
+-- -- on peut eliminer ce cas
+-- ⟦coh⟧ {.(Γ , A , (var (vS x) =h var v0))} (ext {Γ} isC {A} x) * ((γ ,Σ α) ,Σ β) = {!!}
+-- ⟦coh⟧ {.(Γ , A , (var (vS x) =h var v0))} (ext {Γ} isC {A} x) (_=h_ {C} a b) ((γ ,Σ α) ,Σ β) =
+--   {!⟦coh⟧ isC A γ!}
 -- {!⟦coh⟧ isC A γ!}
   -- ⟦coh⟧ isC A γ!
+
+{-
+
+
+POUR INTERPRETER LES COHERENCES
+
+
+-}
+
+-- def A.4.3
+idA : {Δ : Con} → isContr Δ → T → ⟦ Δ ⟧C
+
+-- def A.4.3
+JA : {Δ : Con} → (isC : isContr Δ) (P : ⟦ Δ ⟧C → Set) (d : (a : T) → P(idA isC a))
+  (δ : ⟦ Δ ⟧C) → P δ
+
+-- A.4.4
+iA : {Δ : Con} (isC : isContr Δ) (a : T) (A : Ty Δ)  → ⟦ A ⟧T (idA isC a)
+
+-- A.4.6
+eq-tm-iA : {Δ : Con }(isC : isContr Δ)(a : T) {B : Ty Δ}
+  (t : Tm B ) 
+  → ⟦ t ⟧tm (idA isC a) ≡ iA isC a B
+
+eq-var-iA : {Δ : Con }(isC : isContr Δ)(a : T) {B : Ty Δ}
+  (x : Var B ) 
+ → π x (idA isC a) ≡ iA isC a B
+
+-- A.4.5
+subst-idA : {Δ : Con} {Γ : Con} (isCΔ : isContr Δ)(isCΓ : isContr Γ)
+  (σ : Δ ⇒ Γ) (a : T) → ⟦ σ ⟧S (idA  isCΔ a) ≡ (idA  isCΓ a)
+
+-- preuve manquante dans Brunerie : dim T [ σ ]  = dim T
+semSb-iA :  {Δ : Con} {Γ : Con} (isCΔ : isContr Δ)(isCΓ : isContr Γ)
+  (σ : Δ ⇒ Γ)
+  (a : T) (A : Ty Γ) →
+   coe (ap (λ v₁ → ∣ ⟦ A ⟧T v₁ ∣) (subst-idA isCΔ isCΓ σ a))
+    (subst ∣_∣ (semSb-T A σ (idA isCΔ a)) (iA isCΔ a (A [ σ ]T)))
+      ≡ iA isCΓ a A
+
+-- règle de cohérence nécessaire  à définir en même temps que semSb-iA pour
+-- définir ce dernier
+-- mais là on va supposer UIP (est-ce raisonnable d'ailleurs ?)
+{-
+
+                        eq-tm-iA
+   ⟦ a [ σ ] ⟧ idΔ -------------------->      iΔ
+          |                                   |
+          |                                   |
+ semSb-tm |                                   |
+          |                                   |
+          V                                   |
+semSb-T # ⟦ a ⟧ o ⟦ σ ⟧ idΔ                 semSb-iA
+          |                                   |
+          |                                   |
+subst-idA |                                   |
+          |                                   |
+          V                                   V
+semSb-T # subst-idA # ⟦ a ⟧ idΓ ----------> semSb-T # subst-idA # iΓ
+                                 eq-tm-iA
+-}
+eq-tm-iA-semSb-iA :  {Δ : Con} {Γ : Con} (isCΔ : isContr Δ)(isCΓ : isContr Γ)
+  (σ : Δ ⇒ Γ) {A : Ty Γ} (a : Tm A) (x : T) →
+  eq-tm-iA isCΔ x (a [ σ ]tm) ≡
+    (
+    coe2r (semSb-T A σ (idA isCΔ x)) (semSb-tm a σ (idA isCΔ x))
+    ◾
+    ap (coe (ap (λ v → ∣ v ∣) (semSb-T A σ (idA isCΔ x) ⁻¹)))
+    (coe2r 
+      (subst-idA isCΔ isCΓ σ x)
+       (apd ⟦ a ⟧tm (subst-idA isCΔ isCΓ σ x))
+       ◾
+       ap (coe (ap (λ v → ∣ ⟦ A ⟧T v ∣) (subst-idA isCΔ isCΓ σ x ⁻¹)))
+         (eq-tm-iA isCΓ x a)
+       )
+    ◾
+    coe2r ((semSb-T A σ (idA isCΔ x)))
+    (
+       coe2r (subst-idA isCΔ isCΓ σ x ) (semSb-iA isCΔ isCΓ σ x A)
+       ) ⁻¹)
+
+eq-tm-iA-semSb-iA isCΔ isCΓ σ a x = uip _ _
+
+
+ap-cst : ∀{ℓ ℓ'}{A : Set ℓ}{B : Set ℓ'}(b : B){a₀ a₁ : A}(a₂ : a₀ ≡ a₁)
+  → ap (λ x → b) a₂ ≡ refl
+
+ap-cst b refl = refl
+
+-- lemme A.4.3
+JA-idA : {Δ : Con} → (isC : isContr Δ) (P : ⟦ Δ ⟧C → Set) (d : (a : T) → P(idA isC a))
+  (a : T) → JA isC P d (idA isC a) ≡ d a
+
+
+-- idA {Δ }isC a = ?
+idA {.(ε , *)} c* a = tt ,Σ a
+idA {.(_ , _ , (var (vS t) =h var v0))} (ext isC t) a = ((idA isC a) ,Σ
+  (⟦ var t ⟧tm (idA isC a))) ,Σ refl
+
+wk-iA : 
+  {Γ     : Con}
+  (isC   : isContr Γ)
+  (a     : T)
+  (A     : Ty Γ)
+  {B    : Ty Γ}
+  (t     : Var B)
+  →
+   (subst ∣_∣ (sym (semWk-T {A = A +T B} {B = (var (vS t)) =h (var v0) } (idA isC a ,Σ π t (idA isC a)) refl))
+   (subst ∣_∣ (sym (semWk-T {A = A} {B = B} (idA isC a) (π t (idA isC a))))
+   (iA isC a A))
+   )
+   ≡
+   iA (ext isC t) a (A +T B +T (var (vS t) =h var v0))
+   
+   -- idfun (subst ∣_∣ (sym (semWk-T {A = A +T B} {B = (var (vS t)) =h (var v0) } (idA isC a ,Σ π t (idA isC a)) refl))
+   -- (subst ∣_∣ (sym (semWk-T {A = A} {B = B} (idA isC a) (π t (idA isC a))))
+   -- (iA isC a A))
+   -- )
+   -- has type ⟦ A +T B +T (var (vS t) =h var v0) ⟧T (idA (ext isC t) a)
+
+
+
+-- version avec terme
+-- idA {.(ε , *)} c* a = tt ,Σ a
+-- idA {.(_ , A , (t +tm A =h var v0))} (ext isC {A} t) a =
+--   ((idA isC a) ,Σ (⟦ t ⟧tm (idA isC a))) ,Σ
+--    coe2r
+--   ((semWk-T {A = A}{B = A} (idA isC a) (⟦ t ⟧tm (idA isC a))))
+--    (semWk-tm {A = A}{ B = A}(idA isC a) (⟦ t ⟧tm (idA isC a)) t)
+  
+ --  coe2r
+ -- ((semWk-T {A = A}{B = A} (idA isC a) (⟦ t ⟧tm (idA isC a))))
+ --  (semWk-tm {A = A}{ B = A}(idA isC a) (⟦ t ⟧tm (idA isC a)) t)
+
+coe-cancel : ∀{ℓ}{A B : Set ℓ} → (p : A ≡ B) → {a : A}{b : A} →
+  (coe p a ≡ coe p b) → a ≡ b
+
+coe-cancel refl q = q
+
+ap-coe-cancel : ∀{ℓ}{A B : Set ℓ} → (p : A ≡ B) → {a : A}{b : A} →
+   (q : coe p a ≡ coe p b) → ap (λ x → coe p x) (coe-cancel p q) ≡ q
+
+ap-coe-cancel refl refl = refl
+
+coe-cancel-ap-id : ∀{ℓ}{A B : Set ℓ} → (p : A ≡ B) → {a : A} 
+   → coe-cancel  ( ap (λ x → x) p)
+  {a = a}
+   refl  ≡ refl
+
+coe-cancel-ap-id refl  = refl
+
+coh-degueu1 : ∀{ℓ}{A B : Set ℓ} → (p : B ≡ A) → {a : B}
+  → (P : (subst ∣_∣ (p ) a ≡ subst ∣_∣ (p ) a)  → Set)
+  →
+  ap P (ap-coe-cancel (ap ∣_∣ ( p )) {a = a} {b = a} refl) ≡
+   ap (λ z → P (ap (coe (ap ∣_∣ (p ))) z))
+     (coe-cancel-ap-id (p ))
+   
+
+coh-degueu1 refl P = refl
+
+
+-- JA {Δ} isC P d δ = {!!}
+JA {.(ε , *)} c* P d (tt ,Σ a) = d a
+JA {.(_ , A , (var (vS t) =h var v0))} (ext isC {A} t) P d (γ ,Σ z ,Σ u) =
+   subst (λ v → P (γ ,Σ z ,Σ v))
+     (ap-coe-cancel (ap ∣_∣ (sym (semWk-T {A = A} {B = A} γ z))) u)
+     (
+     J {A = ⟦ A ⟧T γ}
+     ( λ { {y} e → P ((γ ,Σ y) ,Σ (ap (subst ∣_∣ (sym (semWk-T {A = A}{B = A} γ y) )) e))})
+     -- Pr
+     (JA isC (λ δ' → P ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ refl)) d γ)
+     (coe-cancel ( ap ∣_∣ (sym (semWk-T {A = A} {B = A} γ z))) u)
+    )
+-- J {A = ⟦ A ⟧T γ} Pr
+-- (JA isC (λ δ' → P ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ refl)) d γ)
+-- (coe-cancel ( ap ∣_∣ (sym (semWk-T {A = A} {B = A} γ z))) u)
+  -- J {A = ⟦ A ⟧T γ} Pr
+  -- (JA isC (λ δ' → P ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ refl)) d γ)
+  -- (coe-cancel {p = ap ∣_∣ (sym (semWk-T {A = A} {B = A} γ z))} u)
+  -- {!(coe-cancel {p = ap ∣_∣ (sym (semWk-T {A = A} {B = A} γ z))} u) !}
+  -- (coe-cancel u)
+  
+  where
+  -- Pr' : {y : ⟦ A ⟧T γ}
+  -- Pr' : {y : _}
+  --   (e :
+  --   subst ∣_∣ (sym (semWk-T {A = A} {B = A} γ y)) (⟦ var t ⟧tm γ) ≡ 
+  --    y
+  
+  --   subst ∣_∣ (sym (semWk-T {A = A} {B = A} γ y)) y
+    -- ) → Set
+  Pr : {y : ⟦ A ⟧T γ} (e : ⟦ var t ⟧tm γ ≡ y) → Set
+  Pr {y} e = P ((γ ,Σ y) ,Σ (ap (subst ∣_∣ (sym (semWk-T {A = A}{B = A} γ y) )) e))
+  -- Pr' {y} e = P ((γ ,Σ ?) ,Σ ?)
+
+
+
+-- version avec termes
+-- JA {.(ε , *)} c* P d (tt ,Σ a) = d a
+-- JA {.(_ , A , (t +tm A =h var v0))} (ext isC {A} t) P d δ = {!!}
+
+⟦coh⟧ isC A δ = JA isC ⟦ A ⟧T (λ a → iA isC a A ) δ 
+
+-- A.4.4 par induction sur le type
+-- iA isC a A = {!!}
+iA isC a * = a
+iA isC a (x =h y) =
+  eq-tm-iA isC a x ◾ eq-tm-iA isC a y ⁻¹
+
+  
+-- correspond à subst-iA
+-- par récurrence sur le type
+-- semSb-iA isCΔ isCΓ σ a A = {!!}
+semSb-iA isCΔ isCΓ σ a * = subst (λ e → a ≡[ e ]≡ a)((ap-cst T (subst-idA isCΔ isCΓ σ a)) ⁻¹) refl
+-- subst (λ e → a ≡[ e ]≡ a)((ap-cst T (subst-idA isCΔ isCΓ σ a)) ⁻¹) refl
+semSb-iA isCΔ isCΓ σ a (_=h_ {A = A} x y) = 
+-- on utilise eq-tm-iA-semSb-iA
+  ap2 (λ u v → coe
+  (ap (λ v₁ → ∣ ⟦ x ⟧tm v₁ ≡ ⟦ y ⟧tm v₁ ∣)
+  (subst-idA isCΔ isCΓ σ a))
+  (subst ∣_∣
+  (EqEq (semSb-T A σ (idA isCΔ a)) (semSb-tm x σ (idA isCΔ a))
+  (semSb-tm y σ (idA isCΔ a)))
+  (u ◾ (v ⁻¹)) ))
+  (eq-tm-iA-semSb-iA isCΔ isCΓ σ x a)
+  (eq-tm-iA-semSb-iA isCΔ isCΓ σ y a)
+  
+  ◾
+  -- on a affaire à une cohérence dégueu
+  coh-degueu2 ⟦ x [ σ ]tm ⟧tm ⟦ y [ σ ]tm ⟧tm
+  ⟦ x ⟧tm ⟦ y  ⟧tm
+  ⟦ σ ⟧S
+  (eq-tm-iA isCΓ a x)
+  (eq-tm-iA isCΓ a y)
+  (subst-idA isCΔ isCΓ σ a)
+  (semSb-T A σ (idA isCΔ a))
+  (semSb-tm x σ (idA isCΔ a))
+  (semSb-tm y σ (idA isCΔ a))
+  (semSb-iA isCΔ isCΓ σ a A)
+    
+
+
+refl' : {l  : _}{A : Set l} (a : A) → a ≡ a
+refl' a = refl
+
+refl'-eq : {l  : _}{A : Set l} (a : A) → refl' a ≡ refl
+refl'-eq a = refl
+
+-- subst-idA isCΔ isCΓ σ a = {!!}
+-- par récurrence sur σ et sur isCΓ
+subst-idA isCΔ () • a
+subst-idA isCΔ c* (σ , t) a =
+  ,Σ= refl (eq-tm-iA isCΔ a t)
+subst-idA isCΔ (ext isCΓ {A} t) (σ , u , v) a =
+  ,Σ= (,Σ= (subst-idA isCΔ isCΓ σ a)
+   (
+   -- coe (ap (λ γ → ⟦ .A ⟧T γ) (subst-idA isCΔ isCΓ σ a))
+   -- (coe (ap (λ x → x) (semSb-T .A σ (idA isCΔ a)))
+   -- (⟦ u ⟧tm (idA isCΔ a)))
+   -- ≡ π t (idA isCΓ a)
+   ap
+   ( λ z → coe (ap (λ v₁ → ∣ ⟦ A ⟧T v₁ ∣) (subst-idA isCΔ isCΓ σ a))
+      (subst ∣_∣ (semSb-T A σ (idA isCΔ a)) z)
+      )
+   (eq-tm-iA isCΔ a u)
+   ◾
+   semSb-iA isCΔ isCΓ σ a A
+   ◾
+   eq-var-iA isCΓ a t ⁻¹
+   ) )
+   -- uip ??
+   -- cf test pour le but
+   (
+   -- dans cette preuve, il y a des endroits où j'ai le droit d'utiliser uip
+   -- et d'autres non
+   {-
+
+dans HTS, on restreint l'élimination de J de l'égalité homotopique à
+P : (a : A) (e : x = y) → Uf
+Uf est l'univers des types fibrants (qui ne parlent pas de l'égalité stricte)
+
+   -}
+   {!(,Σ= (subst-idA isCΔ isCΓ σ a)
+   (ap
+   (λ z →
+   coe (ap (λ v₁ → ⟦ A ⟧T v₁) (subst-idA isCΔ isCΓ σ a))
+   (coe (ap (λ x → x) (semSb-T A σ (idA isCΔ a))) z))
+   (eq-tm-iA isCΔ a u)
+   ◾ semSb-iA isCΔ isCΓ σ a A
+   ◾ eq-var-iA isCΓ a t ⁻¹))!}
+  ◾
+  (refl'-eq _)
+   )
+  -- ,Σ= (,Σ= {!subst-idA isCΔ isCΓ σ!} {!!}) {!!}
+
+-- JA-idA  isCΔ P d a = {!!}
+-- A.4.3
+JA-idA c* P d a = refl
+JA-idA (ext isCΔ {A} t) P d a =
+  {!
+  ap
+  (λ z →
+  coe z
+  (J
+  (λ {y} e →
+  P
+  (idA isCΔ a ,Σ y ,Σ
+  ap (coe (ap (λ x → x) (semWk-T {A = A} {B = A} (idA isCΔ a) y ⁻¹)))
+  e))
+  (JA isCΔ (λ δ' → P (δ' ,Σ π t δ' ,Σ refl)) d (idA isCΔ a))
+  (coe-cancel
+  (ap (λ x → x)
+  (semWk-T {A = A} {B = A} (idA isCΔ a) (π t (idA isCΔ a)) ⁻¹))
+  {a = π t (idA isCΔ a)} {b = π t (idA isCΔ a)} refl)))
+  !}
+ {- 
+  ap
+  (λ z →
+      coe z
+      (J
+      (λ {y} e →
+      P
+      (idA isCΔ a ,Σ y ,Σ
+      ap (coe (ap (λ x → x) (semWk-T {A = A} {B = A} (idA isCΔ a) y ⁻¹)))
+      e))
+      (JA isCΔ (λ δ' → P (δ' ,Σ π t δ' ,Σ refl)) d (idA isCΔ a))
+      (coe-cancel
+      (ap (λ x → x)
+      (semWk-T {A = A} {B = A} (idA isCΔ a) (π t (idA isCΔ a)) ⁻¹))
+      {a = π t (idA isCΔ a)} {b = π t (idA isCΔ a)} refl)))
+  (    coh-degueu1  (semWk-T {A = A} {B = A} (idA isCΔ a) (π t (idA isCΔ a)) ⁻¹)
+      (λ v → P (idA isCΔ a ,Σ π t (idA isCΔ a) ,Σ v))
+  )
+
+-}
+  
+
+
+   ◾
+  apd (J
+  (λ {y} e →
+  P
+  (idA isCΔ a ,Σ y ,Σ
+  ap (coe (ap (λ x → x) (semWk-T {A = A} (idA isCΔ a) y ⁻¹))) e))
+  (JA isCΔ (λ δ' → P (δ' ,Σ π t δ' ,Σ refl)) d (idA isCΔ a))
+  )
+  (coe-cancel-ap-id (semWk-T {A = A}{B = A} (idA isCΔ a) (π t (idA isCΔ a)) ⁻¹)
+  )
+  
+  ◾
+  (JA-idA isCΔ (λ δ' → P (δ' ,Σ ⟦ var t ⟧tm δ' ,Σ refl)) d a )
+  
+  -- : subst ∣_∣ (sym (semWk-T (idA isCΔ a) (π t (idA isCΔ a))))
+  -- (π t (idA isCΔ a))
+  -- ≡
+  -- subst ∣_∣ (sym (semWk-T (idA isCΔ a) (π t (idA isCΔ a))))
+  -- (π t (idA isCΔ a))) →
+
+
+
+-- eq-tm-iA isC a {B} t = {!!}
+-- par récurrence sur le terme
+eq-tm-iA isC a {B} (var x) = eq-var-iA isC a x
+eq-tm-iA isC a {.(A [ δ ]T)} (coh isCΓ δ A) =
+  
+  ap (λ z → coe (ap (λ x → x) (semSb-T A δ (idA isC a) ⁻¹)) z)
+  (
+  J {x = idA  isCΓ a}
+  (λ {y} e → JA isCΓ ⟦ A ⟧T (λ a₁ → iA isCΓ a₁ A) y ≡
+     coe (ap ⟦ A ⟧T e) (iA isCΓ a A))
+     (JA-idA isCΓ ⟦ A ⟧T (λ a₁ → iA isCΓ a₁ A) a)
+     ((subst-idA isC isCΓ δ a)⁻¹)
+     )
+     ◾
+    -- en utilisant semSb-iA 
+     coe2r
+     (semSb-T A δ (idA isC a))
+     (
+     coe2r
+       (subst-idA isC isCΓ δ a)
+       (semSb-iA isC isCΓ δ a A)) ⁻¹
+  
+
+  -- J {x = idA  isCΓ a}
+  -- (λ {y} e → JA isCΓ ⟦ A ⟧T (λ a₁ → iA isCΓ a₁ A) y ≡
+  -- coe (ap ⟦ A ⟧T e) (iA isCΓ a A))
+  -- (JA-idA isCΓ ⟦ A ⟧T (λ a₁ → iA isCΓ a₁ A) a)
+  -- ((subst-idA isC isCΓ δ a)⁻¹)
+
+
+  -- Goal: coe (ap (λ x → x) (semSb-T A δ (idA isC a) ⁻¹))
+  -- (JA isCΓ ⟦ A ⟧T (λ a₁ → iA isCΓ a₁ A) (⟦ δ ⟧S (idA isC a)))
+  -- ≡ iA isC a (A [ δ ]T)
+  -- Have: JA isCΓ ⟦ A ⟧T (λ a₁ → iA isCΓ a₁ A) (⟦ δ ⟧S (idA isC a)) ≡
+  -- coe (ap ⟦ A ⟧T (?4 T isC isCΓ δ a ⁻¹)) (iA isCΓ a A)
+
+-- par récurrence sur la variable
+-- eq-var-iA isC a {B} x = {!!}
+eq-var-iA c* a {.*} v0 = refl
+eq-var-iA (ext isC t) a {.(var (vS (vS t)) =h var (vS v0))} v0 = {!!}
+eq-var-iA c* a {.(_ +T *)} (vS ())
+eq-var-iA (ext isC t) a {.(_ +T _ +T (var (vS t) =h var v0))} (vS v0) = {!!}
+
+eq-var-iA (ext isC {A} t) a {.(B +T A +T (var (vS t) =h var v0))} (vS (vS {A = B} x)) =
+ ap
+   (λ z →
+      subst ∣_∣
+      (sym (semWk-T {A = B +T A} {B = (var (vS t)) =h (var v0) } (idA isC a ,Σ π t (idA isC a)) refl))
+      (subst ∣_∣
+       (sym (semWk-T {A = B} {B = A} (idA isC a) (π t (idA isC a)))) z))
+   (eq-var-iA isC a  x)
+ 
+  -- ap
+  --   (λ z →
+  --      subst ∣_∣
+  --      (sym (semWk-T {A = B +T A} {B = (var (vS t)) =h (var v0) } (idA isC a ,Σ π t (idA isC a)) refl))
+  --      (subst ∣_∣
+  --       (sym (semWk-T {A = B} {B = A} (idA isC a) (π t (idA isC a)))) z))
+  --   {!!}
+  ◾
+  wk-iA isC a B t
+  
+  
+
+
+-- par récurrence sur le type A
+-- wk-iA isCΓ a A {B} t = {!!}
+wk-iA isCΓ a * {B} t = refl
+-- uip ??
+wk-iA isCΓ a (_=h_ {A} x y) {B} t =
+  uip _ _
+  
+ 
