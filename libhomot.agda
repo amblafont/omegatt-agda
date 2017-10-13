@@ -6,15 +6,47 @@ module libhomot where
 open import Agda.Primitive
 open import lib
 
+postulate
+  Fib : ∀ {i} → Set i → Set i
+  instance ⊤-Fib : Fib ⊤
+  instance Π-Fib : ∀ {i}{j}{A : Set i} {B : A → Set j} → ⦃ fibA : Fib A ⦄ → ⦃ fibB : {a : A} → Fib (B a) ⦄ → Fib ((a : A) → B a)
 
-data _≡T_ {ℓ}{A : Set ℓ} (x : A) : A → Set ℓ where
-  reflT : x ≡T x
+  instance Σ-Fib : ∀ {i}{j}{A : Set i}{B : A → Set j} → ⦃ fibA : Fib A ⦄ → ⦃ fibB : (a : A) → Fib (B a) ⦄ → Fib (Σ A B)
+
+postulate
+  _≡T_ : ∀{ℓ}{A : Set ℓ} (x : A) → A → Set ℓ
+  reflT' : ∀{ℓ}{A : Set ℓ} (x : A) → x ≡T x
+
+  JFib : ∀{ℓ ℓ'}{A : Set ℓ} ⦃ fibA : Fib A ⦄
+     {x : A}
+     (P : {y : A} → x ≡T y → Set ℓ') →
+     ⦃ fibP : (y : A) (w : x ≡T y) → Fib (P w) ⦄ →
+       P (reflT' _) → {y : A} → (w : x ≡T y) → P w
+
+  JT : ∀{ℓ ℓ'}{A : Set ℓ} {x : A} (P : {y : A} → x ≡T y → Set ℓ') → P (reflT' _) → {y : A} → (w : x ≡T y) → P w
+  βJT : ∀{ℓ ℓ'}{A : Set ℓ} {x : A} (P : {y : A} → x ≡T y → Set ℓ') → (x : P (reflT' _)) →  
+      JT P x (reflT' _) ≡ x
+  βJFib : ∀{ℓ ℓ'}{A : Set ℓ}⦃ fibA : Fib A ⦄ {x : A} (P : {y : A} → x ≡T y → Set ℓ')    ⦃ fibP : (y : A) (w : x ≡T y) → Fib (P w) ⦄ →  (x : P (reflT' _)) →  
+      JFib P ⦃ fibP = fibP ⦄  x (reflT' _) ≡ x
+  -- reflT : x ≡T x
+
+{-# REWRITE βJT #-}
+{-# REWRITE βJFib #-}
+
+postulate
+   instance eq-Fib : ∀{ℓ}{A : Set ℓ} ⦃ fibA : Fib A ⦄ (x y : A) → Fib (x ≡T y)
+
+
+reflT : {l  : _}{A : Set l} {x : A} → x ≡T x
+reflT {x = a} = reflT' a
+
 
 -- version argument explicite. Malheureusement, je ne sais pas rendre
 -- reflT explicite
-reflT' : {l  : _}{A : Set l} (a : A) → a ≡T a
-reflT' a = reflT
+-- reflT' : {l  : _}{A : Set l} (a : A) → a ≡T a
+-- reflT' a = reflT
 
+{-
 _◾T_ : ∀{ℓ}{A : Set ℓ}{x y z : A} → x ≡T y → y ≡T z → x ≡T z
 reflT ◾T reflT = reflT
 
@@ -25,8 +57,10 @@ reflT ⁻¹T = reflT
 
 infix 5 _⁻¹T
 
-JT : ∀{ℓ ℓ'}{A : Set ℓ} {x : A} (P : {y : A} → x ≡T y → Set ℓ') → P reflT → {y : A} → (w : x ≡T y) → P w
-JT P pr reflT = pr
+-}
+
+-- JT : ∀{ℓ ℓ'}{A : Set ℓ} {x : A} (P : {y : A} → x ≡T y → Set ℓ') → P reflT → {y : A} → (w : x ≡T y) → P w
+-- JT P pr reflT = pr
 
 
 -- aucune condition : se fait par elimination sur une égalité stricte
