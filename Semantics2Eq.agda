@@ -4,16 +4,16 @@
 -- ne s'applique qe pour les types fibrants ??
 
 -- j'ai besoin de savoir que pour type A de la syntaxe, ⟦ A ⟧T γ est fibrant
--- ⟦ Δ ⟧ est fibrant
-
+-- ⟦ Δ ⟧ est fibrant 
 -- dans cette version, on a 2 égalités : une stricte (celle de lib.agda)
 -- et celle de T
 
-module Semantics2Eq (T : Set) where
+open import libhomot
+
+module Semantics2Eq (T : Set) ⦃ FibT : Fib T ⦄ where
 
 open import BasicSyntax
 open import lib
-open import libhomot
 
 
 postulate
@@ -26,6 +26,9 @@ postulate
 
 ⟦_⟧C   : Con → Set
 ⟦_⟧T   : ∀{Γ} → Ty Γ → ⟦ Γ ⟧C → Set
+
+Fib-C : (Γ : Con) → Fib (⟦ Γ ⟧C)
+Fib-T : {Γ : Con} (A : Ty Γ) (γ : ⟦ Γ ⟧C) → Fib (⟦ A ⟧T γ)
 
 
 ⟦_⟧tm  : ∀{Γ A} → Tm A → (γ : ⟦ Γ ⟧C) 
@@ -94,9 +97,16 @@ semWk-tm : ∀ {Γ A B}(γ : ⟦ Γ ⟧C)(v : ∣ ⟦ B ⟧T γ ∣)
 ⟦ ε ⟧C = ⊤
 ⟦ Γ , A ⟧C = Σ (⟦ Γ ⟧C) (λ γ  → ∣ ⟦ A ⟧T γ ∣) 
 
+Fib-C ε = ⊤-Fib
+Fib-C (Γ , A) =  Σ-Fib ⦃ fibA = Fib-C Γ ⦄ ⦃ fibB = Fib-T A  ⦄ 
+
+
 ⟦_⟧T {Γ} * γ = T
 -- T
 ⟦_⟧T {Γ} (a =h b) γ = ⟦ a ⟧tm γ ≡T ⟦ b ⟧tm γ
+
+Fib-T {Γ} * γ = FibT
+Fib-T {Γ} (_=h_ {A = A} a b) γ = eq-Fib ⦃ fibA = (Fib-T A γ) ⦄ (⟦ a ⟧tm γ) (⟦ b ⟧tm γ)
 
 ⟦_⟧tm {Γ} {A} (var x) γ = π x γ
 -- ici j'ai besoin de désactiver le termination checker
@@ -548,7 +558,13 @@ POUR INTERPRETER LES COHERENCES
 idA : {Δ : Con} → isContr Δ → T → ⟦ Δ ⟧C
 
 -- def A.4.3
-JA : {Δ : Con} → (isC : isContr Δ) (P : ⟦ Δ ⟧C → Set) (d : (a : T) → P(idA isC a))
+-- JA : {Δ : Con} → (isC : isContr Δ) (P : ⟦ Δ ⟧C → Set) (d : (a : T) → P(idA isC a))
+--   (δ : ⟦ Δ ⟧C) → P δ
+
+-- def A.4.3
+JA-fib : {Δ : Con} → (isC : isContr Δ) (P : ⟦ Δ ⟧C → Set)
+  ⦃ fibP : (δ : ⟦ Δ ⟧C) → Fib (P δ) ⦄
+  (d : (a : T) → P(idA isC a))
   (δ : ⟦ Δ ⟧C) → P δ
 
 -- A.4.4
@@ -583,9 +599,13 @@ ap-cst : ∀{ℓ ℓ'}{A : Set ℓ}{B : Set ℓ'}(b : B){a₀ a₁ : A}(a₂ : a
 ap-cst b refl = refl
 
 -- lemme A.4.3
-JA-idA : {Δ : Con} → (isC : isContr Δ) (P : ⟦ Δ ⟧C → Set) (d : (a : T) → P(idA isC a))
-  (a : T) → JA isC P d (idA isC a) ≡ d a
 
+-- JA-idA : {Δ : Con} → (isC : isContr Δ) (P : ⟦ Δ ⟧C → Set) (d : (a : T) → P(idA isC a))
+--   (a : T) → JA isC P d (idA isC a) ≡ d a
+
+JA-idA-fib : {Δ : Con} → (isC : isContr Δ) (P : ⟦ Δ ⟧C → Set)
+  ⦃ fibP : (δ : ⟦ Δ ⟧C) → Fib (P δ) ⦄
+   (d : (a : T) → P(idA isC a)) (a : T) → JA-fib isC P ⦃ fibP = fibP ⦄ d (idA isC a) ≡ d a
 
 -- idA {Δ }isC a = ?
 idA {.(ε , *)} c* a = tt ,Σ a
@@ -657,6 +677,7 @@ coh-degueu1 refl P = refl
 
 
 -- JA {Δ} isC P d δ = {!!}
+{-
 JA {.(ε , *)} c* P d (tt ,Σ a) = d a
 JA {.(_ , A , (var (vS t) =h var v0))} (ext isC {A} t) P d (γ ,Σ z ,Σ u) =
   
@@ -674,8 +695,28 @@ JA {.(_ , A , (var (vS t) =h var v0))} (ext isC {A} t) P d (γ ,Σ z ,Σ u) =
   )
   
   
+-}
 
 
+JA-fib {.(ε , *)} c* P d (tt ,Σ a) = d a
+JA-fib {.(_ , A , (var (vS t) =h var v0))} (ext isC {A} t) P {{fibP}} d (γ ,Σ z ,Σ u) =
+  
+  coe
+  (ap (λ w → P (γ ,Σ z ,Σ w))
+  (coe2 (Eq2G (_≡T_) (sym (semWk-T' A A γ z)) refl refl) u))
+  (JFib {A = ⟦ A ⟧T γ} ⦃ fibA = Fib-T A γ ⦄
+  ( λ  {y} e → P ((γ ,Σ y) ,Σ (coe (Eq2G _≡T_ (sym (semWk-T' A A γ y)) refl refl) e)))
+  ⦃ fibP = λ y e →
+       fibP ((γ ,Σ y) ,Σ (coe (Eq2G _≡T_ (sym (semWk-T' A A γ y)) refl refl) e))
+  ⦄
+  (subst (λ w → P (γ ,Σ π t γ ,Σ w))
+  (Refl2G _ reflT' (sym (semWk-T' A A γ _)) refl ⁻¹  )
+  (JA-fib isC (λ δ' → P ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _))
+      ⦃ fibP = (λ δ' → fibP ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _)) ⦄
+     d γ) )
+  (coe (Eq2G _≡T_ (sym (semWk-T' A A γ _)) refl refl ⁻¹) u)
+  )
+  
 
 
 -- version avec termes
@@ -683,7 +724,7 @@ JA {.(_ , A , (var (vS t) =h var v0))} (ext isC {A} t) P d (γ ,Σ z ,Σ u) =
 -- JA {.(_ , A , (t +tm A =h var v0))} (ext isC {A} t) P d δ = {!!}
 
 -- ok
-⟦coh⟧ isC A δ = JA isC ⟦ A ⟧T (λ a → iA isC a A ) δ 
+⟦coh⟧ isC A δ = JA-fib isC ⟦ A ⟧T ⦃ fibP = Fib-T A ⦄ (λ a → iA isC a A )  δ 
 
 -- A.4.4 par induction sur le type
 -- iA isC a A = {!!}
@@ -801,10 +842,11 @@ Je mets la preuve suivante en commentaire car agda met 15s à typer le fihcier
 ************************
 
 -}
+-- ce admit a été vérifier post-fib
    admit
 
 -- début du commentage hardcore
- {-
+  {-
   -- ici est la difficulté
   -- ⟦ v ⟧ réécrit par eq-tm-iA donne
   --    (reflT' (iA isCΔ a ((A +T A) [ σ , u ]T)))
@@ -1394,12 +1436,9 @@ Je mets la preuve suivante en commentaire car agda met 15s à typer le fihcier
 
 
  
-
--- JA-idA  isCΔ P d a = {!!}
 -- A.4.3
-JA-idA c* P d a = refl
-JA-idA (ext isCΔ {A} t) P d a =
-  
+JA-idA-fib c* P d a = refl
+JA-idA-fib (ext isCΔ {A} t) P ⦃ fibP = fibP ⦄ d a =
 -- on transforme JT du transport de reflT  en transport de JT de refl
 {-
 ****************
@@ -1407,6 +1446,7 @@ JA-idA (ext isCΔ {A} t) P d a =
 Je commente la preuve et je mets admit pour que ca compile plus vite
 
 ****************
+vérifié post-fib
 -}
    admit
   
@@ -1433,20 +1473,29 @@ Je commente la preuve et je mets admit pour que ca compile plus vite
       ⁻¹)
     (apd
       (λ z →
-         JT
+         JFib
+         ⦃ fibA = Fib-T A (idA isCΔ a) ⦄
          (λ {y} e →
             P
             (idA isCΔ a ,Σ y ,Σ
              coe (Eq2G _≡T_ (sym (semWk-T' A A (idA isCΔ a) y)) refl refl) e))
+             ⦃ fibP = (λ y e →
+             fibP
+             (idA isCΔ a ,Σ y ,Σ
+             coe (Eq2G _≡T_ (sym (semWk-T' A A (idA isCΔ a) y)) refl refl) e)) ⦄
          (subst (λ w → P (idA isCΔ a ,Σ π t (idA isCΔ a) ,Σ w))
           (Refl2G _≡T_ reflT'
            (sym (semWk-T' A A (idA isCΔ a) (π t (idA isCΔ a)))) refl
            ⁻¹)
-          (JA isCΔ
+          (JA-fib isCΔ
            (λ δ' →
               P
               (δ' ,Σ π t δ' ,Σ
                reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ'))))
+               ⦃ fibP = (λ δ' →
+                fibP
+                (δ' ,Σ π t δ' ,Σ
+                reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ')))) ⦄
            d (idA isCΔ a)))
          z)
       {a₀ =
@@ -1462,7 +1511,61 @@ Je commente la preuve et je mets admit pour que ca compile plus vite
          )}
          (Refl2G _≡T_ reflT'
          (sym (semWk-T' A A (idA isCΔ a) (π t (idA isCΔ a)))) refl
-         ) ⁻¹)))
+         ) ⁻¹))
+         ◾
+         ap
+           (coe
+            (ap
+             (λ z →
+                P
+                (idA isCΔ a ,Σ π t (idA isCΔ a) ,Σ
+                 coe
+                 (Eq2G _≡T_ (semWk-T' A A (idA isCΔ a) (π t (idA isCΔ a)) ⁻¹) refl
+                  refl)
+                 z))
+             ((coe-inv
+                {p = (Eq2G (_≡T_)
+                (sym (semWk-T' A A (idA isCΔ a) (π t (idA isCΔ a)))) refl refl
+                )}
+               (Refl2G _≡T_ reflT'
+                (semWk-T' A A (idA isCΔ a) (π t (idA isCΔ a)) ⁻¹) refl)
+               ⁻¹)
+              ⁻¹)))
+              -- utilisation explicite de la règle de réduction
+              (βJFib ⦃ fibA =
+                  Fib-T A (idA isCΔ a) 
+                ⦄
+                (λ {y} e →
+              P
+              (idA isCΔ a ,Σ y ,Σ
+              coe
+              (Eq2G (_≡T_) (sym (semWk-T' A A (idA isCΔ a) y)) refl
+              refl)
+              e))
+              ⦃ fibP = (λ y e →
+              fibP
+              (idA isCΔ a ,Σ y ,Σ
+              coe
+              (Eq2G (_≡T_) (sym (semWk-T' A A (idA isCΔ a) y)) refl
+              refl)
+              e)) ⦄
+              (subst (λ w → P (idA isCΔ a ,Σ π t (idA isCΔ a) ,Σ w))
+              (Refl2G (_≡T_) (reflT')
+              (sym (semWk-T' A A (idA isCΔ a) (π t (idA isCΔ a)))) refl
+              ⁻¹)
+              (JA-fib isCΔ
+              (λ δ' →
+              P
+                (δ' ,Σ π t δ' ,Σ
+                  reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ'))))
+              ⦃ fibP = (λ δ' →
+                  fibP
+                  (δ' ,Σ π t δ' ,Σ
+                  reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ')))) ⦄
+              d (idA isCΔ a)
+              ))
+              )
+         )
       ◾
       cccoe
 
@@ -1505,11 +1608,15 @@ Je commente la preuve et je mets admit pour que ca compile plus vite
       
       ◾
       
-      ap (λ z → coe z (JA isCΔ
+      ap (λ z → coe z (JA-fib isCΔ
         (λ δ' →
         P
         (δ' ,Σ π t δ' ,Σ
         reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ'))))
+        ⦃ fibP = (λ δ' →
+        fibP
+        (δ' ,Σ π t δ' ,Σ
+        reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ')))) ⦄
         d (idA isCΔ a)))
 
       (uip
@@ -1546,10 +1653,14 @@ Je commente la preuve et je mets admit pour que ca compile plus vite
       )
       
       ◾
-      JA-idA isCΔ (λ δ' →
+      JA-idA-fib isCΔ (λ δ' →
         P
         (δ' ,Σ π t δ' ,Σ
         reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ'))))
+        ⦃ fibP = (λ δ' →
+        fibP
+        (δ' ,Σ π t δ' ,Σ
+        reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ')))) ⦄
         d a
 
 
@@ -1559,6 +1670,8 @@ Je commente la preuve et je mets admit pour que ca compile plus vite
 
 
 
+-- JA-fib isCΓ ⟦ A ⟧T (λ a₁ → iA isCΓ a₁ A) (⟦ δ ⟧S (idA isC a)) ≡
+-- coe (ap (λ v → ⟦ A ⟧T v) (subst-idA isC isCΓ δ a ⁻¹)) (iA isCΓ a A)
 
 -- eq-tm-iA isC a {B} t = {!!}
 -- par récurrence sur le terme
@@ -1566,13 +1679,17 @@ eq-tm-iA isC a {B} (var x) = eq-var-iA isC a x
 eq-tm-iA isC a {.(A [ δ ]T)} (coh isCΓ δ A) =
   
   ap (λ z → coe (ap (λ x → x) (semSb-T A δ (idA isC a) ⁻¹)) z)
+  -- TODO coucou
+  (
   (
   J {x = idA  isCΓ a}
-  (λ {y} e → JA isCΓ ⟦ A ⟧T (λ a₁ → iA isCΓ a₁ A) y ≡
+  (λ {y} e → JA-fib isCΓ ⟦ A ⟧T ⦃ fibP = Fib-T A ⦄ (λ a₁ → iA isCΓ a₁ A) y ≡
      coe (ap ⟦ A ⟧T e) (iA isCΓ a A))
-     (JA-idA isCΓ ⟦ A ⟧T (λ a₁ → iA isCΓ a₁ A) a)
+     (JA-idA-fib isCΓ ⟦ A ⟧T ⦃ fibP = Fib-T A ⦄ (λ a₁ → iA isCΓ a₁ A) a)
      ((subst-idA isC isCΓ δ a)⁻¹)
      )
+  )
+  -- (
      ◾
     -- en utilisant semSb-iA 
      coe2r
@@ -2219,6 +2336,7 @@ eq-var-iA (ext isC {A} t) a {.(B +T A +T (var (vS t) =h var v0))} (vS (vS {A = B
   ************
   Ici je mets admit pour que ça aille plus vite
   ************
+  vérifié post-fib
   -}
    admit-eq-var
    {-

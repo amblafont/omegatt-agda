@@ -1,5 +1,6 @@
 {-# OPTIONS --without-K --rewriting #-}
 
+-- !!! PAS BESOIn DE REWRITE RULLES !!! DANS 2TT !!
 -- ici c'est pour l'égalité homotopique
 module libhomot where
 
@@ -30,8 +31,8 @@ postulate
       JFib P ⦃ fibP = fibP ⦄  x (reflT' _) ≡ x
   -- reflT : x ≡T x
 
-{-# REWRITE βJT #-}
-{-# REWRITE βJFib #-}
+-- {-# REWRITE βJT #-}
+-- {-# REWRITE βJFib #-}
 
 postulate
    instance eq-Fib : ∀{ℓ}{A : Set ℓ} ⦃ fibA : Fib A ⦄ (x y : A) → Fib (x ≡T y)
