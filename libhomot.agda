@@ -24,9 +24,9 @@ postulate
      ⦃ fibP : (y : A) (w : x ≡T y) → Fib (P w) ⦄ →
        P (reflT' _) → {y : A} → (w : x ≡T y) → P w
 
-  JT : ∀{ℓ ℓ'}{A : Set ℓ} {x : A} (P : {y : A} → x ≡T y → Set ℓ') → P (reflT' _) → {y : A} → (w : x ≡T y) → P w
-  βJT : ∀{ℓ ℓ'}{A : Set ℓ} {x : A} (P : {y : A} → x ≡T y → Set ℓ') → (x : P (reflT' _)) →  
-      JT P x (reflT' _) ≡ x
+  -- JT : ∀{ℓ ℓ'}{A : Set ℓ} {x : A} (P : {y : A} → x ≡T y → Set ℓ') → P (reflT' _) → {y : A} → (w : x ≡T y) → P w
+  -- βJT : ∀{ℓ ℓ'}{A : Set ℓ} {x : A} (P : {y : A} → x ≡T y → Set ℓ') → (x : P (reflT' _)) →  
+  --     JT P x (reflT' _) ≡ x
   βJFib : ∀{ℓ ℓ'}{A : Set ℓ}⦃ fibA : Fib A ⦄ {x : A} (P : {y : A} → x ≡T y → Set ℓ')    ⦃ fibP : (y : A) (w : x ≡T y) → Fib (P w) ⦄ →  (x : P (reflT' _)) →  
       JFib P ⦃ fibP = fibP ⦄  x (reflT' _) ≡ x
   -- reflT : x ≡T x

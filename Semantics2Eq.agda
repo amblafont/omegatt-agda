@@ -711,9 +711,15 @@ JA-fib {.(_ , A , (var (vS t) =h var v0))} (ext isC {A} t) P {{fibP}} d (γ ,Σ 
   ⦄
   (subst (λ w → P (γ ,Σ π t γ ,Σ w))
   (Refl2G _ reflT' (sym (semWk-T' A A γ _)) refl ⁻¹  )
+  {!
   (JA-fib isC (λ δ' → P ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _))
       ⦃ fibP = (λ δ' → fibP ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _)) ⦄
-     d γ) )
+     d γ)
+  !}
+  -- (JA-fib isC (λ δ' → P ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _))
+  --     ⦃ fibP = (λ δ' → fibP ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _)) ⦄
+  --    d γ)
+     )
   (coe (Eq2G _≡T_ (sym (semWk-T' A A γ _)) refl refl ⁻¹) u)
   )
   
@@ -843,10 +849,10 @@ Je mets la preuve suivante en commentaire car agda met 15s à typer le fihcier
 
 -}
 -- ce admit a été vérifier post-fib
-   -- admit
+    admit
 
 -- début du commentage hardcore
- --  {-
+   {-
   -- ici est la difficulté
   -- ⟦ v ⟧ réécrit par eq-tm-iA donne
   --    (reflT' (iA isCΔ a ((A +T A) [ σ , u ]T)))
@@ -1448,9 +1454,9 @@ Je commente la preuve et je mets admit pour que ca compile plus vite
 ****************
 vérifié post-fib
 -}
-   -- admit
+   admit
   
- -- {- 
+  {- 
   ap
     (λ z →
        coe
@@ -2338,8 +2344,8 @@ eq-var-iA (ext isC {A} t) a {.(B +T A +T (var (vS t) =h var v0))} (vS (vS {A = B
   ************
   vérifié post-fib
   -}
-   -- admit-eq-var
-   -- {-
+    admit-eq-var
+    {-
   ap
     (λ z →
        coe
