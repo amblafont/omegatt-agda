@@ -712,11 +712,11 @@ JA-fib {.(_ , A , (var (vS t) =h var v0))} (ext isC {A} t) P {{fibP}} d (γ ,Σ 
   ⦄
   (subst (λ w → P (γ ,Σ π t γ ,Σ w))
   (Refl2G _ reflT' (sym (semWk-T' A A γ _)) refl ⁻¹  )
-  {!
+  -- {!
   (JA-fib isC (λ δ' → P ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _))
       ⦃ fibP = (λ δ' → fibP ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _)) ⦄
      d γ)
-  !}
+  -- !}
   -- (JA-fib isC (λ δ' → P ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _))
   --     ⦃ fibP = (λ δ' → fibP ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _)) ⦄
   --    d γ)
