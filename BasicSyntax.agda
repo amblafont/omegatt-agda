@@ -1,5 +1,100 @@
-{-# OPTIONS --without-K --no-termination-check  #-}
+{-# OPTIONS --without-K  --no-termination-check #-}
 
+{-
+
+Γ ⊢ a : A
+Γ ⊢ b : A
+Δ ⊢ δ : Γ
+
+(a =h b) [ δ ]T = a [ δ ]tm =h b [ δ ]tm
+
+
+--- exemple a = coh_Θ,B[σ]
+
+Θ ⊢ B
+Γ ⊢ σ : Θ
+
+A = B [ σ ]
+
+Δ ⊢ a [ δ ] : B [ σ ] [ δ ]
+
+a [δ] = coh_Θ,B[σ] [δ] = sym [⊚]T # coh_Θ,B[σ ⊚ δ]
+[⊚]T : B [ σ ⊚ δ] = B [σ][δ]
+
+B[σ⊚δ] n'est pas un sous appel de (a=h_B[σ] b) [δ]
+
+
+
+
+-- exemple 2 : a = vS y
+a = vS y
+
+Γ = Γ', (x : B)
+Γ' ⊢ B
+Γ' ⊢ y : C
+
+A = C +T B
+
+Δ ⊢ δ : (Γ', B)
+donc δ = δ', t
+  avec Δ ⊢ t : B [δ']
+
+
+
+Γ', B ⊢ vS y : C +T B
+Δ ⊢ (vS y) [ δ' , t]V  : (C +T B) [δ' , t]
+
+Δ ⊢ y [ δ' ] : C [δ']
+
+(vS y)   [ δ' , t ]V = wk-tm (y[δ']) = y [δ'] ⟦ +T[,]T ⟫
+   = +T[,]T # y[δ']
+
+où +T[,]T
+
+: (C +T B) [ δ' , t ]T ≡ C [ δ' ]T
+
+C [ δ' ]T < 
+
+
+--- exemple 1 : a = v0
+a = v0
+
+Γ = Γ', (x : B)
+
+Γ' ⊢ B
+Γ', B ⊢ B +T B
+Γ', B ⊢ v0 : B +T B
+
+A = B +T B
+
+Δ ⊢ δ : (Γ', B)
+donc δ = δ', t
+  avec Δ ⊢ t : B [δ']
+
+
+Γ, B ⊢ v0 : B +T B
+Δ ⊢ v0 [ δ' , t]V  : (B +T B) [δ' , t]
+
+Δ ⊢ t : B [δ']
+
+v0   [ δ' , t ]V = wk-tm t = t ⟦ +T[,]T ⟫
+    = +T[,]T # t
+
+où +T[,]T : (B +T B) [ δ' , t ]T ≡ B [ δ' ]T
+
+B [ δ' ]T n'est pas un sous-terme de (B +T B) [ δ' , t ]T 
+B n'est pas un sous terme de B +T B
+mais
+
+(v0 =h_(B +T B) b) [δ', t] = f (B [ δ' ]T)
+
+
+
+
+
+
+
+-}
 
 module BasicSyntax where 
 
@@ -239,8 +334,8 @@ wk-tm : {Γ Δ : Con}
          → Tm (A [ δ ]T) → Tm ((A +T B) [ δ , b ]T)
 wk-tm t = t ⟦ +T[,]T ⟫
 
-v0   [ δ , a ]V = wk-tm a
-vS x [ δ , a ]V = wk-tm (x [ δ ]V)
+v0   [ δ , a ]V =  a ⟦ +T[,]T ⟫
+vS x [ δ , a ]V = (x [ δ ]V)⟦ +T[,]T ⟫
 
 
 wk-coh : {Γ Δ : Con}
@@ -307,6 +402,9 @@ wk+S+S eq = trans [+S]S (cong (λ x → x +S _) eq)
 [⊚]T {A = *} = refl
 [⊚]T {A = _=h_ {A} a b} = hom≡ ([⊚]tm _) ([⊚]tm _) 
 
+-- postulate
+--   admit : ∀{l}{A : Set l} → A
+-- +T[,]T' A B δ = admit
 +T[,]T' * B δ = refl
 +T[,]T' (_=h_ {A} a b) B δ = hom≡  (+tm[,]tm _) (+tm[,]tm _)
 
@@ -381,27 +479,27 @@ congtm2 refl = refl _
 
 -- some widely-used contexts
 
-x:* : Con
-x:* = ε , *
+-- x:* : Con
+-- x:* = ε , *
 
-x:*,y:*,α:x=y : Con
-x:*,y:*,α:x=y = x:* , * , (var (vS v0) =h var v0)
+-- x:*,y:*,α:x=y : Con
+-- x:*,y:*,α:x=y = x:* , * , (var (vS v0) =h var v0)
 
-vX : Tm {x:*,y:*,α:x=y} *
-vX = var (vS (vS v0))
+-- vX : Tm {x:*,y:*,α:x=y} *
+-- vX = var (vS (vS v0))
 
-vY : Tm {x:*,y:*,α:x=y} *
-vY = var (vS v0)
+-- vY : Tm {x:*,y:*,α:x=y} *
+-- vY = var (vS v0)
 
-vα : Tm {x:*,y:*,α:x=y} (vX =h vY)
-vα = var v0
+-- vα : Tm {x:*,y:*,α:x=y} (vX =h vY)
+-- vα = var v0
 
-x:*,y:*,α:x=y,z:*,β:y=z : Con
-x:*,y:*,α:x=y,z:*,β:y=z = x:*,y:*,α:x=y , * , (var (vS (vS v0)) =h var v0)
+-- x:*,y:*,α:x=y,z:*,β:y=z : Con
+-- x:*,y:*,α:x=y,z:*,β:y=z = x:*,y:*,α:x=y , * , (var (vS (vS v0)) =h var v0)
 
-vZ : Tm {x:*,y:*,α:x=y,z:*,β:y=z} *
-vZ = var (vS v0)
+-- vZ : Tm {x:*,y:*,α:x=y,z:*,β:y=z} *
+-- vZ = var (vS v0)
 
-vβ : Tm {x:*,y:*,α:x=y,z:*,β:y=z} (vY +tm _ +tm _ =h vZ)
-vβ = var v0
+-- vβ : Tm {x:*,y:*,α:x=y,z:*,β:y=z} (vY +tm _ +tm _ =h vZ)
+-- vβ = var v0
 
