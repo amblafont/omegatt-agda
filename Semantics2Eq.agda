@@ -850,10 +850,10 @@ Je mets la preuve suivante en commentaire car agda met 15s à typer le fihcier
 
 -}
 -- ce admit a été vérifier post-fib
-    admit
+-- admit
 
 -- début du commentage hardcore
-   {-
+   -- {-
   -- ici est la difficulté
   -- ⟦ v ⟧ réécrit par eq-tm-iA donne
   --    (reflT' (iA isCΔ a ((A +T A) [ σ , u ]T)))
@@ -1455,9 +1455,9 @@ Je commente la preuve et je mets admit pour que ca compile plus vite
 ****************
 vérifié post-fib
 -}
-   admit
+   -- admit
   
-  {- 
+  -- {- 
   ap
     (λ z →
        coe
@@ -2345,8 +2345,8 @@ eq-var-iA (ext isC {A} t) a {.(B +T A +T (var (vS t) =h var v0))} (vS (vS {A = B
   ************
   vérifié post-fib
   -}
-    admit-eq-var
-    {-
+    -- admit-eq-var
+    -- {-
   ap
     (λ z →
        coe
