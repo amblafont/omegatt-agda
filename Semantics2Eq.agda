@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K --no-termination-check  #-}
+{-# OPTIONS --no-termination-check  #-}
 
 -- question : est-ce que le schéma d'élimination de l'égalité homotopique
 -- ne s'applique qe pour les types fibrants ??
@@ -19,8 +19,9 @@ open import lib
 postulate
    admit : {l : _} {A : Set l} → A
 
-postulate
-   uip : {l : _} {A : Set l} {a : A} {b : A} (e : a ≡ b) (e' : a ≡ b) → e ≡ e'
+
+uip : {l : _} {A : Set l} {a : A} {b : A} (e : a ≡ b) (e' : a ≡ b) → e ≡ e'
+uip refl refl = refl
 
 
 
