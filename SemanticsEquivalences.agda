@@ -89,8 +89,8 @@ record Semantic  : Set₁ where
                 g_equiv (semSb-T A δ γ) (⟦ a ⟧tm γ))
              -- needed
     semWk-T  : ∀ {Γ A B}(γ : ⟦ Γ ⟧C)(v :  ⟦ B ⟧T γ )
-             → ⟦ A +T B ⟧T (f_equiv ⟦_⟧C-β2 (γ ,, v)) ≡ 
-             ⟦ A ⟧T γ
+             → equiv (⟦ A +T B ⟧T (f_equiv ⟦_⟧C-β2 (γ ,, v))  )
+             (⟦ A ⟧T γ)
   
 
     semWk-S  : ∀ {Γ Δ B}{γ : ⟦ Γ ⟧C}{v :  ⟦ B ⟧T γ }
@@ -99,15 +99,15 @@ record Semantic  : Set₁ where
 
 -- needed
     semWk-tm : ∀ {Γ A B}(γ : ⟦ Γ ⟧C)(v :  ⟦ B ⟧T γ )
-             → (a : Tm A) → coerce'  (semWk-T γ v) 
+             → (a : Tm A) → g_equiv  (semWk-T γ v) 
                (⟦ a +tm B ⟧tm (f_equiv ⟦_⟧C-β2 (γ ,, v))) 
                  ≡ (⟦ a ⟧tm γ)
     π-β1  : ∀{Γ A}(γ : ⟦ Γ ⟧C)(v :  ⟦ A ⟧T γ ) 
-          → coerce' (semWk-T γ v) 
+          → g_equiv (semWk-T γ v) 
             (π v0 (f_equiv ⟦_⟧C-β2 (γ ,, v))) ≡ v
 
     π-β2  : ∀{Γ A B}(x : Var A)(γ : ⟦ Γ ⟧C)(v :  ⟦ B ⟧T γ ) 
-          → coerce' (semWk-T γ v) (π (vS {Γ} {A} {B} x) 
+          → g_equiv (semWk-T γ v) (π (vS {Γ} {A} {B} x) 
             (f_equiv ⟦_⟧C-β2 (γ ,, v))) ≡ π x γ
 
 -- intuile
