@@ -32,7 +32,10 @@ record isequiv {A B : Set} (f : A → B) : Set where
 
 
 equiv : (A : Set)(B : Set) → Set
-equiv A B = Σ (A → B) (isequiv {A = A} {B = B})
+equiv A B = Σ (B → A) isequiv
+
+f_equiv : {A B : Set} (e : equiv A B) → B → A
+f_equiv e = proj₁ e
 
 record Semantic  : Set₁ where
   field
@@ -46,8 +49,8 @@ record Semantic  : Set₁ where
            -- definitionel
     ⟦_⟧C-β1  : equiv ⟦ ε ⟧C  ⊤
     -- definitionel
-    ⟦_⟧C-β2  : ∀ {Γ A} → (⟦ (Γ , A) ⟧C) ≡ 
-             Σ (⟦ Γ ⟧C) (λ γ  →  ⟦ A ⟧T γ )
+    ⟦_⟧C-β2  : ∀ {Γ A} → equiv (⟦ (Γ , A) ⟧C)  
+             (Σ (⟦ Γ ⟧C) (λ γ  →  ⟦ A ⟧T γ ))
     
 -- definitionel
     -- ⟦_⟧T-β1  : ∀{Γ}{γ : ⟦ Γ ⟧C} → ⟦ * ⟧T γ ≡ G
@@ -78,29 +81,31 @@ record Semantic  : Set₁ where
 
     ⟦_⟧S-β2  : ∀{Γ Δ}{A : Ty Δ}{δ : Γ ⇒ Δ}{γ : ⟦ Γ ⟧C}
              {a : Tm (A [ δ ]T)} → ((⟦ δ , a ⟧S )γ )
-             ≡ coerce (⟦_⟧C-β2) ((⟦ δ ⟧S γ) ,,
+             ≡ f_equiv (⟦_⟧C-β2) ((⟦ δ ⟧S γ) ,,
                 coerce' (semSb-T A δ γ) (⟦ a ⟧tm γ))
              -- needed
     semWk-T  : ∀ {Γ A B}(γ : ⟦ Γ ⟧C)(v :  ⟦ B ⟧T γ )
-             → ⟦ A +T B ⟧T (coerce ⟦_⟧C-β2 (γ ,, v)) ≡ 
+             → ⟦ A +T B ⟧T (f_equiv ⟦_⟧C-β2 (γ ,, v)) ≡ 
              ⟦ A ⟧T γ
   
 
     semWk-S  : ∀ {Γ Δ B}{γ : ⟦ Γ ⟧C}{v :  ⟦ B ⟧T γ }
              → (δ : Γ ⇒ Δ) → ⟦ δ +S B ⟧S 
-             (coerce ⟦_⟧C-β2 (γ ,, v)) ≡ ⟦ δ ⟧S γ
+             (f_equiv ⟦_⟧C-β2 (γ ,, v)) ≡ ⟦ δ ⟧S γ
 
 -- needed
     semWk-tm : ∀ {Γ A B}(γ : ⟦ Γ ⟧C)(v :  ⟦ B ⟧T γ )
              → (a : Tm A) → coerce'  (semWk-T γ v) 
-               (⟦ a +tm B ⟧tm (coerce ⟦_⟧C-β2 (γ ,, v))) 
+               (⟦ a +tm B ⟧tm (f_equiv ⟦_⟧C-β2 (γ ,, v))) 
                  ≡ (⟦ a ⟧tm γ)
     π-β1  : ∀{Γ A}(γ : ⟦ Γ ⟧C)(v :  ⟦ A ⟧T γ ) 
           → coerce' (semWk-T γ v) 
-            (π v0 (coerce ⟦_⟧C-β2 (γ ,, v))) ≡ v
+            (π v0 (f_equiv ⟦_⟧C-β2 (γ ,, v))) ≡ v
 
     π-β2  : ∀{Γ A B}(x : Var A)(γ : ⟦ Γ ⟧C)(v :  ⟦ B ⟧T γ ) 
           → coerce' (semWk-T γ v) (π (vS {Γ} {A} {B} x) 
-            (coerce ⟦_⟧C-β2 (γ ,, v))) ≡ π x γ
-    ⟦coh⟧  : ∀{Θ} → isContr Θ → (A : Ty Θ) 
-           → (θ : ⟦ Θ ⟧C) →  ⟦ A ⟧T θ 
+            (f_equiv ⟦_⟧C-β2 (γ ,, v))) ≡ π x γ
+
+-- intuile
+    -- ⟦coh⟧  : ∀{Θ} → isContr Θ → (A : Ty Θ) 
+    --        → (θ : ⟦ Θ ⟧C) →  ⟦ A ⟧T θ 
