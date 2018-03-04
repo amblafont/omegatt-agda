@@ -30,12 +30,16 @@ record isequiv {A B : Set} (f : A → B) : Set where
       invG_eq :  (x : B) → f (invG x) ≡ x
       invD_eq :  (x : A) → invD (f x) ≡ x
 
+open isequiv
 
 equiv : (A : Set)(B : Set) → Set
 equiv A B = Σ (B → A) isequiv
 
 f_equiv : {A B : Set} (e : equiv A B) → B → A
 f_equiv e = proj₁ e
+
+g_equiv : {A B : Set} (e : equiv A B) → A → B
+g_equiv e = invG (proj₂ e)
 
 record Semantic  : Set₁ where
   field
@@ -61,12 +65,12 @@ record Semantic  : Set₁ where
     --          ♭ (hom (⟦ A ⟧T γ) (⟦ u ⟧tm γ) (⟦ v ⟧tm γ))
              -- needed
     semSb-T   : ∀ {Γ Δ}(A : Ty Δ)(δ : Γ ⇒ Δ)(γ : ⟦ Γ ⟧C)
-              → ⟦ A [ δ ]T ⟧T γ ≡ ⟦ A ⟧T (⟦ δ ⟧S γ)
+              → equiv (⟦ A [ δ ]T ⟧T γ)  (⟦ A ⟧T (⟦ δ ⟧S γ))
 
 -- needed
     semSb-tm  : ∀{Γ Δ}{A : Ty Δ}(a : Tm A)(δ : Γ ⇒ Δ)
               (γ : ⟦ Γ ⟧C) →  
-              coerce' (semSb-T A δ γ)(⟦ a [ δ ]tm ⟧tm γ) ≡ (⟦ a ⟧tm (⟦ δ ⟧S γ))
+              g_equiv (semSb-T A δ γ)(⟦ a [ δ ]tm ⟧tm γ) ≡ (⟦ a ⟧tm (⟦ δ ⟧S γ))
 
 -- needed
     semSb-S   : ∀ {Γ Δ Θ}(γ : ⟦ Γ ⟧C)(δ : Γ ⇒ Δ)
@@ -82,7 +86,7 @@ record Semantic  : Set₁ where
     ⟦_⟧S-β2  : ∀{Γ Δ}{A : Ty Δ}{δ : Γ ⇒ Δ}{γ : ⟦ Γ ⟧C}
              {a : Tm (A [ δ ]T)} → ((⟦ δ , a ⟧S )γ )
              ≡ f_equiv (⟦_⟧C-β2) ((⟦ δ ⟧S γ) ,,
-                coerce' (semSb-T A δ γ) (⟦ a ⟧tm γ))
+                g_equiv (semSb-T A δ γ) (⟦ a ⟧tm γ))
              -- needed
     semWk-T  : ∀ {Γ A B}(γ : ⟦ Γ ⟧C)(v :  ⟦ B ⟧T γ )
              → ⟦ A +T B ⟧T (f_equiv ⟦_⟧C-β2 (γ ,, v)) ≡ 
