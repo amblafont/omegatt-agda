@@ -67,10 +67,22 @@ record Semantic  : Set₁ where
     semSb-T   : ∀ {Γ Δ}(A : Ty Δ)(δ : Γ ⇒ Δ)(γ : ⟦ Γ ⟧C)
               → equiv (⟦ A [ δ ]T ⟧T γ)  (⟦ A ⟧T (⟦ δ ⟧S γ))
 
+
 -- needed
     semSb-tm  : ∀{Γ Δ}{A : Ty Δ}(a : Tm A)(δ : Γ ⇒ Δ)
               (γ : ⟦ Γ ⟧C) →  
               g_equiv (semSb-T A δ γ)(⟦ a [ δ ]tm ⟧tm γ) ≡ (⟦ a ⟧tm (⟦ δ ⟧S γ))
+
+-- à la place de ⟦_⟧T-β2, il faudrait des cohérences stricte qui disent, par exemple,
+-- comment on obtient l'équivalence de semSb-T à partir de semSb-tm :
+    semSb-Tβ :  ∀{Γ Δ A u v}(δ : Γ ⇒ Δ){γ : ⟦ Γ ⟧C} {z :  ⟦ (u [ δ ]tm) =h (v [ δ ]tm) ⟧T γ}
+         → g_equiv (semSb-T (_=h_ {A = A} u v) δ γ) z ≡ {!!}
+         -- en fait c'est pas clair que cette cohérence est nécessaire...
+         -- par contre, il faut par exemple une cohérence entre semSb-T et semWk-T car semWk-T peut se déduire par la substitution weakening
+         -- bref, c'est pas clair.
+
+         -- ⟦ u =h v ⟧T γ ≡
+         -- ♭ (hom (⟦ A ⟧T γ) (⟦ u ⟧tm γ) (⟦ v ⟧tm γ))
 
 -- needed
     semSb-S   : ∀ {Γ Δ Θ}(γ : ⟦ Γ ⟧C)(δ : Γ ⇒ Δ)
