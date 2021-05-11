@@ -16,8 +16,8 @@ open import BasicSyntax
 open import lib
 
 
-postulate
-   admit : {l : _} {A : Set l} → A
+-- postulate
+--    admit : {l : _} {A : Set l} → A
 
 
 uip : {l : _} {A : Set l} {a : A} {b : A} (e : a ≡ b) (e' : a ≡ b) → e ≡ e'
@@ -99,7 +99,7 @@ semWk-tm : ∀ {Γ A B}(γ : ⟦ Γ ⟧C)(v : ∣ ⟦ B ⟧T γ ∣)
 ⟦ Γ , A ⟧C = Σ (⟦ Γ ⟧C) (λ γ  → ∣ ⟦ A ⟧T γ ∣) 
 
 Fib-C ε = ⊤-Fib
-Fib-C (Γ , A) =  Σ-Fib ⦃ fibA = Fib-C Γ ⦄ ⦃ fibB = Fib-T A  ⦄ 
+Fib-C (Γ , A) =  Σ-Fib ⦃ fibA = Fib-C Γ ⦄ ⦃ fibB = Fib-T A _  ⦄ 
 
 
 ⟦_⟧T {Γ} * γ = T
@@ -107,7 +107,7 @@ Fib-C (Γ , A) =  Σ-Fib ⦃ fibA = Fib-C Γ ⦄ ⦃ fibB = Fib-T A  ⦄
 ⟦_⟧T {Γ} (a =h b) γ = ⟦ a ⟧tm γ ≡T ⟦ b ⟧tm γ
 
 Fib-T {Γ} * γ = FibT
-Fib-T {Γ} (_=h_ {A = A} a b) γ = eq-Fib ⦃ fibA = (Fib-T A γ) ⦄ (⟦ a ⟧tm γ) (⟦ b ⟧tm γ)
+Fib-T {Γ} (_=h_ {A = A} a b) γ = eq-Fib ⦃ fibA = (Fib-T A γ) ⦄ -- (⟦ a ⟧tm γ) (⟦ b ⟧tm γ)
 
 ⟦_⟧tm {Γ} {A} (var x) γ = π x γ
 -- ici j'ai besoin de désactiver le termination checker
@@ -564,7 +564,7 @@ idA : {Δ : Con} → isContr Δ → T → ⟦ Δ ⟧C
 
 -- def A.4.3
 JA-fib : {Δ : Con} → (isC : isContr Δ) (P : ⟦ Δ ⟧C → Set)
-  ⦃ fibP : (δ : ⟦ Δ ⟧C) → Fib (P δ) ⦄
+  ⦃ fibP : {δ : ⟦ Δ ⟧C} → Fib (P δ) ⦄
   (d : (a : T) → P(idA isC a))
   (δ : ⟦ Δ ⟧C) → P δ
 
@@ -605,7 +605,7 @@ ap-cst b refl = refl
 --   (a : T) → JA isC P d (idA isC a) ≡ d a
 
 JA-idA-fib : {Δ : Con} → (isC : isContr Δ) (P : ⟦ Δ ⟧C → Set)
-  ⦃ fibP : (δ : ⟦ Δ ⟧C) → Fib (P δ) ⦄
+  ⦃ fibP : {δ : ⟦ Δ ⟧C} → Fib (P δ) ⦄
    (d : (a : T) → P(idA isC a)) (a : T) → JA-fib isC P ⦃ fibP = fibP ⦄ d (idA isC a) ≡ d a
 
 -- idA {Δ }isC a = ?
@@ -707,18 +707,18 @@ JA-fib {.(_ , A , (var (vS t) =h var v0))} (ext isC {A} t) P {{fibP}} d (γ ,Σ 
   (coe2 (Eq2G (_≡T_) (sym (semWk-T' A A γ z)) refl refl) u))
   (JFib {A = ⟦ A ⟧T γ} ⦃ fibA = Fib-T A γ ⦄
   ( λ  {y} e → P ((γ ,Σ y) ,Σ (coe (Eq2G _≡T_ (sym (semWk-T' A A γ y)) refl refl) e)))
-  ⦃ fibP = λ y e →
-       fibP ((γ ,Σ y) ,Σ (coe (Eq2G _≡T_ (sym (semWk-T' A A γ y)) refl refl) e))
+  ⦃ fibP = λ {y} {e} →
+       fibP {(γ ,Σ y) ,Σ (coe (Eq2G _≡T_ (sym (semWk-T' A A γ y)) refl refl) e)}
   ⦄
   (subst (λ w → P (γ ,Σ π t γ ,Σ w))
   (Refl2G _ reflT' (sym (semWk-T' A A γ _)) refl ⁻¹  )
   -- {!
   (JA-fib isC (λ δ' → P ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _))
-      ⦃ fibP = (λ δ' → fibP ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _)) ⦄
+      ⦃ fibP = (λ {δ'} → fibP {(δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _}) ⦄
      d γ)
   -- !}
   -- (JA-fib isC (λ δ' → P ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _))
-  --     ⦃ fibP = (λ δ' → fibP ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _)) ⦄
+  --     ⦃ fibP = (λ {δ'} → fibP ((δ' ,Σ (⟦ var t ⟧tm δ')) ,Σ reflT' _)) ⦄
   --    d γ)
      )
   (coe (Eq2G _≡T_ (sym (semWk-T' A A γ _)) refl refl ⁻¹) u)
@@ -731,7 +731,7 @@ JA-fib {.(_ , A , (var (vS t) =h var v0))} (ext isC {A} t) P {{fibP}} d (γ ,Σ 
 -- JA {.(_ , A , (t +tm A =h var v0))} (ext isC {A} t) P d δ = {!!}
 
 -- ok
-⟦coh⟧ isC A δ = JA-fib isC ⟦ A ⟧T ⦃ fibP = Fib-T A ⦄ (λ a → iA isC a A )  δ 
+⟦coh⟧ isC A δ = JA-fib isC ⟦ A ⟧T ⦃ fibP = Fib-T A _ ⦄ (λ a → iA isC a A )  δ 
 
 -- A.4.4 par induction sur le type
 -- iA isC a A = {!!}
@@ -1486,10 +1486,10 @@ vérifié post-fib
             P
             (idA isCΔ a ,Σ y ,Σ
              coe (Eq2G _≡T_ (sym (semWk-T' A A (idA isCΔ a) y)) refl refl) e))
-             ⦃ fibP = (λ y e →
+             ⦃ fibP = (λ {y} {e} →
              fibP
-             (idA isCΔ a ,Σ y ,Σ
-             coe (Eq2G _≡T_ (sym (semWk-T' A A (idA isCΔ a) y)) refl refl) e)) ⦄
+             {idA isCΔ a ,Σ y ,Σ
+             coe (Eq2G _≡T_ (sym (semWk-T' A A (idA isCΔ a) y)) refl refl) e}) ⦄
          (subst (λ w → P (idA isCΔ a ,Σ π t (idA isCΔ a) ,Σ w))
           (Refl2G _≡T_ reflT'
            (sym (semWk-T' A A (idA isCΔ a) (π t (idA isCΔ a)))) refl
@@ -1499,10 +1499,10 @@ vérifié post-fib
               P
               (δ' ,Σ π t δ' ,Σ
                reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ'))))
-               ⦃ fibP = (λ δ' →
+               ⦃ fibP = (λ {δ'} →
                 fibP
-                (δ' ,Σ π t δ' ,Σ
-                reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ')))) ⦄
+                {δ' ,Σ π t δ' ,Σ
+                reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ'))}) ⦄
            d (idA isCΔ a)))
          z)
       {a₀ =
@@ -1549,13 +1549,13 @@ vérifié post-fib
               (Eq2G (_≡T_) (sym (semWk-T' A A (idA isCΔ a) y)) refl
               refl)
               e))
-              ⦃ fibP = (λ y e →
+              ⦃ fibP = (λ {y} {e} →
               fibP
-              (idA isCΔ a ,Σ y ,Σ
+              {idA isCΔ a ,Σ y ,Σ
               coe
               (Eq2G (_≡T_) (sym (semWk-T' A A (idA isCΔ a) y)) refl
               refl)
-              e)) ⦄
+              e}) ⦄
               (subst (λ w → P (idA isCΔ a ,Σ π t (idA isCΔ a) ,Σ w))
               (Refl2G (_≡T_) (reflT')
               (sym (semWk-T' A A (idA isCΔ a) (π t (idA isCΔ a)))) refl
@@ -1565,10 +1565,10 @@ vérifié post-fib
               P
                 (δ' ,Σ π t δ' ,Σ
                   reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ'))))
-              ⦃ fibP = (λ δ' →
+              ⦃ fibP = (λ {δ'} →
                   fibP
-                  (δ' ,Σ π t δ' ,Σ
-                  reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ')))) ⦄
+                  {δ' ,Σ π t δ' ,Σ
+                  reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ'))}) ⦄
               d (idA isCΔ a)
               ))
               )
@@ -1620,10 +1620,10 @@ vérifié post-fib
         P
         (δ' ,Σ π t δ' ,Σ
         reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ'))))
-        ⦃ fibP = (λ δ' →
+        ⦃ fibP = (λ {δ'} →
         fibP
-        (δ' ,Σ π t δ' ,Σ
-        reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ')))) ⦄
+        {δ' ,Σ π t δ' ,Σ
+        reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ'))}) ⦄
         d (idA isCΔ a)))
 
       (uip
@@ -1664,10 +1664,10 @@ vérifié post-fib
         P
         (δ' ,Σ π t δ' ,Σ
         reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ'))))
-        ⦃ fibP = (λ δ' →
+        ⦃ fibP = (λ {δ'} →
         fibP
-        (δ' ,Σ π t δ' ,Σ
-        reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ')))) ⦄
+        {δ' ,Σ π t δ' ,Σ
+        reflT' (subst ∣_∣ (sym (semWk-T' A A δ' (π t δ'))) (π t δ'))}) ⦄
         d a
 
 
@@ -1690,9 +1690,9 @@ eq-tm-iA isC a {.(A [ δ ]T)} (coh isCΓ δ A) =
   (
   (
   J {x = idA  isCΓ a}
-  (λ {y} e → JA-fib isCΓ ⟦ A ⟧T ⦃ fibP = Fib-T A ⦄ (λ a₁ → iA isCΓ a₁ A) y ≡
+  (λ {y} e → JA-fib isCΓ ⟦ A ⟧T ⦃ fibP = Fib-T A _ ⦄ (λ a₁ → iA isCΓ a₁ A) y ≡
      coe (ap ⟦ A ⟧T e) (iA isCΓ a A))
-     (JA-idA-fib isCΓ ⟦ A ⟧T ⦃ fibP = Fib-T A ⦄ (λ a₁ → iA isCΓ a₁ A) a)
+     (JA-idA-fib isCΓ ⟦ A ⟧T ⦃ fibP = Fib-T A _ ⦄ (λ a₁ → iA isCΓ a₁ A) a)
      ((subst-idA isC isCΓ δ a)⁻¹)
      )
   )
@@ -1720,8 +1720,8 @@ eq-tm-iA isC a {.(A [ δ ]T)} (coh isCΓ δ A) =
   -- Have: JA isCΓ ⟦ A ⟧T (λ a₁ → iA isCΓ a₁ A) (⟦ δ ⟧S (idA isC a)) ≡
   -- coe (ap ⟦ A ⟧T (?4 T isC isCΓ δ a ⁻¹)) (iA isCΓ a A)
 
-postulate
-   admit-eq-var : {l : _} {A : Set l} → A
+-- postulate
+--    admit-eq-var : {l : _} {A : Set l} → A
 
 -- par récurrence sur le type A
 -- wk-iA isCΓ a A {B} t = {!!}

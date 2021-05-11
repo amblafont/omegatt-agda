@@ -12,7 +12,7 @@ postulate
   instance ⊤-Fib : Fib ⊤
   instance Π-Fib : ∀ {i}{j}{A : Set i} {B : A → Set j} → ⦃ fibA : Fib A ⦄ → ⦃ fibB : {a : A} → Fib (B a) ⦄ → Fib ((a : A) → B a)
 
-  instance Σ-Fib : ∀ {i}{j}{A : Set i}{B : A → Set j} → ⦃ fibA : Fib A ⦄ → ⦃ fibB : (a : A) → Fib (B a) ⦄ → Fib (Σ A B)
+  instance Σ-Fib : ∀ {i}{j}{A : Set i}{B : A → Set j} → ⦃ fibA : Fib A ⦄ → ⦃ fibB : {a : A} → Fib (B a) ⦄ → Fib (Σ A B)
 
 postulate
   _≡T_ : ∀{ℓ}{A : Set ℓ} (x : A) → A → Set ℓ
@@ -21,13 +21,13 @@ postulate
   JFib : ∀{ℓ ℓ'}{A : Set ℓ} ⦃ fibA : Fib A ⦄
      {x : A}
      (P : {y : A} → x ≡T y → Set ℓ') →
-     ⦃ fibP : (y : A) (w : x ≡T y) → Fib (P w) ⦄ →
+     ⦃ fibP : {y : A} {w : x ≡T y} → Fib (P w) ⦄ →
        P (reflT' _) → {y : A} → (w : x ≡T y) → P w
 
   -- JT : ∀{ℓ ℓ'}{A : Set ℓ} {x : A} (P : {y : A} → x ≡T y → Set ℓ') → P (reflT' _) → {y : A} → (w : x ≡T y) → P w
   -- βJT : ∀{ℓ ℓ'}{A : Set ℓ} {x : A} (P : {y : A} → x ≡T y → Set ℓ') → (x : P (reflT' _)) →  
   --     JT P x (reflT' _) ≡ x
-  βJFib : ∀{ℓ ℓ'}{A : Set ℓ}⦃ fibA : Fib A ⦄ {x : A} (P : {y : A} → x ≡T y → Set ℓ')    ⦃ fibP : (y : A) (w : x ≡T y) → Fib (P w) ⦄ →  (x : P (reflT' _)) →  
+  βJFib : ∀{ℓ ℓ'}{A : Set ℓ}⦃ fibA : Fib A ⦄ {x : A} (P : {y : A} → x ≡T y → Set ℓ')    ⦃ fibP : {y : A} {w : x ≡T y} → Fib (P w) ⦄ →  (x : P (reflT' _)) →  
       JFib P ⦃ fibP = fibP ⦄  x (reflT' _) ≡ x
   -- reflT : x ≡T x
 
@@ -35,7 +35,7 @@ postulate
 -- {-# REWRITE βJFib #-}
 
 postulate
-   instance eq-Fib : ∀{ℓ}{A : Set ℓ} ⦃ fibA : Fib A ⦄ (x y : A) → Fib (x ≡T y)
+   instance eq-Fib : ∀{ℓ}{A : Set ℓ} ⦃ fibA : Fib A ⦄ {x y : A} → Fib (x ≡T y)
 
 
 reflT : {l  : _}{A : Set l} {x : A} → x ≡T x

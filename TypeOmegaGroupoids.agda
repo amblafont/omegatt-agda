@@ -1,15 +1,16 @@
-{-# OPTIONS --without-K #-}
+-- {-# OPTIONS --without-K #-}
 
 
-module TypeOmegaGroupoids (T : Set) where
+module TypeOmegaGroupoids (T : Set)  where
 
 open import BasicSyntax
 open import lib
+open import libhomot
 open import DefOmegaGroupoids
 import Semantics2Eq
 
 
-to-omega-groupoid : DefOmegaGroupoids.Semantic
+to-omega-groupoid : {{ fibT : Fib T }} → DefOmegaGroupoids.Semantic
 to-omega-groupoid = record
                     { ⟦_⟧C = Semantics2Eq.⟦_⟧C T
                     ; ⟦_⟧T = Semantics2Eq.⟦_⟧T T
@@ -29,5 +30,5 @@ to-omega-groupoid = record
                       ; semWk-tm =  λ {Γ} {A} {B} → Semantics2Eq.semWk-tm T {A = A} {B = B} 
                       ; π-β1 = λ {Γ} {A} → Semantics2Eq.π-β1 T {A = A}
                       ; π-β2 = λ {Γ} {A} → Semantics2Eq.π-β2 T {A = A}
-                      ; ⟦coh⟧ = Semantics2Eq.⟦coh⟧ T
+                      ; ⟦coh⟧ = Semantics2Eq.⟦coh⟧ T 
                       }
